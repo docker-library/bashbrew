@@ -17,8 +17,8 @@ import (
 func Fetch(dir, repo string) (string, *Manifest2822, error) {
 	repoName := path.Base(repo)
 
-	_, err := url.Parse(repo)
-	if err == nil {
+	u, err := url.Parse(repo)
+	if err == nil && u.IsAbs() {
 		// must be remote URL!
 		resp, err := http.Get(repo)
 		if err != nil {
