@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const DefaultLineBasedFetch = "refs/heads/*" // backwards compatibility
+
 // TODO write more of a proper parser? (probably not worthwhile given that 2822 is the preferred format)
 func ParseLineBasedLine(line string, defaults Manifest2822Entry) (*Manifest2822Entry, error) {
 	entry := defaults.Clone()
@@ -29,6 +31,12 @@ func ParseLineBasedLine(line string, defaults Manifest2822Entry) (*Manifest2822E
 		entry.Directory = strings.TrimSpace(parts[1])
 	}
 
+	if entry.GitFetch == DefaultLineBasedFetch && !GitCommitRegex.MatchString(entry.GitCommit) {
+		// doesn't look like a commit, must be a tag
+		entry.GitFetch = "refs/tags/" + entry.GitCommit
+		entry.GitCommit = "FETCH_HEAD"
+	}
+
 	return &entry, nil
 }
 
@@ -39,7 +47,7 @@ func ParseLineBased(readerIn io.Reader) (*Manifest2822, error) {
 		Global: DefaultManifestEntry.Clone(),
 	}
 	manifest.Global.Maintainers = []string{`TODO parse old-style "maintainer:" comment lines?`}
-	manifest.Global.GitFetch = "refs/heads/*" // backwards compatibility
+	manifest.Global.GitFetch = DefaultLineBasedFetch
 
 	for {
 		line, err := reader.ReadString('\n')
