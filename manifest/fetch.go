@@ -34,6 +34,9 @@ func Fetch(dir, repo string) (string, string, *Manifest2822, error) {
 		}
 		defer resp.Body.Close()
 		man, err := Parse(resp.Body)
+		if tagName != "" && man.GetTag(tagName) == nil {
+			return repoName, tagName, man, fmt.Errorf("tag not found in manifest for %q: %q", repoName, tagName)
+		}
 		return repoName, tagName, man, err
 	}
 
@@ -49,6 +52,9 @@ func Fetch(dir, repo string) (string, string, *Manifest2822, error) {
 		if err == nil {
 			defer f.Close()
 			man, err := Parse(f)
+			if tagName != "" && man.GetTag(tagName) == nil {
+				return repoName, tagName, man, fmt.Errorf("tag not found in manifest for %q: %q", repoName, tagName)
+			}
 			return repoName, tagName, man, err
 		}
 	}
