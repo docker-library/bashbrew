@@ -128,12 +128,19 @@ func (manifest Manifest2822) String() string {
 	return strings.Join(ret, "\n\n")
 }
 
+func (entry Manifest2822Entry) HasTag(tag string) bool {
+	for _, existingTag := range entry.Tags {
+		if tag == existingTag {
+			return true
+		}
+	}
+	return false
+}
+
 func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
 	for _, entry := range manifest.Entries {
-		for _, existingTag := range entry.Tags {
-			if tag == existingTag {
-				return &entry
-			}
+		if entry.HasTag(tag) {
+			return &entry
 		}
 	}
 	return nil
