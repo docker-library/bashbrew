@@ -68,5 +68,5 @@ var FuncMap = template.FuncMap{
 		return strings.NewReplacer(strs...).Replace(str)
 	}),
 	"first": stringsActionFactory("first", true, func(strs []string, str string) string { return str }),
-	"last":  stringsActionFactory("first", false, func(strs []string, str string) string { return str }),
+	"last":  stringsActionFactory("last", false, func(strs []string, str string) string { return str }),
 }
