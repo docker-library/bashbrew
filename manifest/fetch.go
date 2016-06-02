@@ -10,13 +10,13 @@ import (
 	"strings"
 )
 
-// "dir" is the default "library directory"
+// "library" is the default "library directory"
 // returns the parsed version of (in order):
 //   if "repo" is a URL, the remote contents of that URL
-//   the file "repo"
-//   the file "dir/repo"
+//   if "repo" is a relative path like "./repo", that file
+//   the file "library/repo"
 // (repoName, tagName, man, err)
-func Fetch(dir, repo string) (string, string, *Manifest2822, error) {
+func Fetch(library, repo string) (string, string, *Manifest2822, error) {
 	repoName := path.Base(repo)
 	tagName := ""
 	if tagIndex := strings.IndexRune(repoName, ':'); tagIndex > 0 {
@@ -41,10 +41,14 @@ func Fetch(dir, repo string) (string, string, *Manifest2822, error) {
 	}
 
 	// try file paths
-	for _, fileName := range []string{
-		repo,
-		filepath.Join(dir, repo),
-	} {
+	filePaths := []string{}
+	if filepath.IsAbs(repo) || strings.IndexRune(repo, filepath.Separator) >= 0 || strings.IndexRune(repo, '/') >= 0 {
+		filePaths = append(filePaths, repo)
+	}
+	if !filepath.IsAbs(repo) {
+		filePaths = append(filePaths, filepath.Join(library, repo))
+	}
+	for _, fileName := range filePaths {
 		f, err := os.Open(fileName)
 		if err != nil && !os.IsNotExist(err) {
 			return repoName, tagName, nil, err
@@ -59,5 +63,5 @@ func Fetch(dir, repo string) (string, string, *Manifest2822, error) {
 		}
 	}
 
-	return repoName, tagName, nil, fmt.Errorf("unable to find a manifest named %q (in %q or as a remote URL)", repo, dir)
+	return repoName, tagName, nil, fmt.Errorf("unable to find a manifest named %q (in %q or as a remote URL)", repo, library)
 }
