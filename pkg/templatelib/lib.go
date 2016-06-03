@@ -15,8 +15,8 @@ func swapStringsFuncBoolArgsOrder(a func(string, string) bool) func(string, stri
 
 func stringsActionFactory(name string, actOnFirst bool, action func([]string, string) string) func(args ...interface{}) string {
 	return func(args ...interface{}) string {
-		if len(args) < 2 {
-			panic(fmt.Sprintf(`%q requires at least two arguments`, name))
+		if len(args) < 1 {
+			panic(fmt.Sprintf(`%q requires at least one argument`, name))
 		}
 
 		var str string
