@@ -3,6 +3,7 @@ package templatelib
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"text/template"
 )
@@ -19,26 +20,28 @@ func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}
 			panic(fmt.Sprintf(`%q requires at least one argument`, name))
 		}
 
-		var arg interface{}
-		if actOnFirst {
-			arg = args[0]
-			args = args[1:]
-		} else {
-			arg = args[len(args)-1]
-			args = args[:len(args)-1]
-		}
-
 		actArgs := []interface{}{}
 		for _, val := range args {
-			switch val.(type) {
-			case []interface{}:
-				actArgs = append(actArgs, val.([]interface{})...)
+			v := reflect.ValueOf(val)
+
+			switch v.Kind() {
+			case reflect.Slice, reflect.Array:
+				actArgs = append(actArgs, v.Interface().([]interface{}))
 			default:
 				actArgs = append(actArgs, val)
 			}
 		}
 
-		return action(args, arg)
+		var arg interface{}
+		if actOnFirst {
+			arg = actArgs[0]
+			actArgs = actArgs[1:]
+		} else {
+			arg = actArgs[len(actArgs)-1]
+			actArgs = actArgs[:len(actArgs)-1]
+		}
+
+		return action(actArgs, arg)
 	}
 }
 
