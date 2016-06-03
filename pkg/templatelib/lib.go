@@ -73,8 +73,24 @@ var FuncMap = template.FuncMap{
 	"hasPrefix": swapStringsFuncBoolArgsOrder(strings.HasPrefix),
 	"hasSuffix": swapStringsFuncBoolArgsOrder(strings.HasSuffix),
 
-	"ternary": func(truthy interface{}, falsey interface{}, val bool) interface{} {
-		if val {
+	"ternary": func(truthy interface{}, falsey interface{}, val interface{}) interface{} {
+		v := reflect.ValueOf(val)
+
+		var t bool
+		switch v.Kind() {
+		case reflect.Bool:
+			t = v.Bool()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			t = v.Int() != 0
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			t = v.Uint() != 0
+		case reflect.Float32, reflect.Float64:
+			t = v.Float() != 0
+		default:
+			t = !v.IsNil()
+		}
+
+		if t {
 			return truthy
 		} else {
 			return falsey
