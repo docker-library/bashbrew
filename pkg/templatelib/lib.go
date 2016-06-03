@@ -53,9 +53,19 @@ func stringsModifierActionFactory(a func(string, string) string) func([]string, 
 	}
 }
 
+// TODO write some tests for these
+
 var FuncMap = template.FuncMap{
 	"hasPrefix": swapStringsFuncBoolArgsOrder(strings.HasPrefix),
 	"hasSuffix": swapStringsFuncBoolArgsOrder(strings.HasSuffix),
+
+	"ternary": func(truthy interface{}, falsey interface{}, val bool) interface{} {
+		if val {
+			return truthy
+		} else {
+			return falsey
+		}
+	},
 
 	"json": func(v interface{}) (string, error) {
 		j, err := json.Marshal(v)
