@@ -13,35 +13,44 @@ func swapStringsFuncBoolArgsOrder(a func(string, string) bool) func(string, stri
 	}
 }
 
-func stringsActionFactory(name string, actOnFirst bool, action func([]string, string) string) func(args ...interface{}) string {
-	return func(args ...interface{}) string {
+func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}, interface{}) interface{}) func(args ...interface{}) interface{} {
+	return func(args ...interface{}) interface{} {
 		if len(args) < 1 {
 			panic(fmt.Sprintf(`%q requires at least one argument`, name))
 		}
 
-		var str string
+		var arg interface{}
 		if actOnFirst {
-			str = args[0].(string)
+			arg = args[0]
 			args = args[1:]
 		} else {
-			str = args[len(args)-1].(string)
+			arg = args[len(args)-1]
 			args = args[:len(args)-1]
 		}
 
-		strs := []string{}
+		actArgs := []interface{}{}
 		for _, val := range args {
 			switch val.(type) {
-			case string:
-				strs = append(strs, val.(string))
-			case []string:
-				strs = append(strs, val.([]string)...)
+			case []interface{}:
+				actArgs = append(actArgs, val.([]interface{})...)
 			default:
-				panic(fmt.Sprintf(`unexpected type %T in %q (%+v)`, val, name, val))
+				actArgs = append(actArgs, val)
 			}
 		}
 
-		return action(strs, str)
+		return action(args, arg)
 	}
+}
+
+func stringsActionFactory(name string, actOnFirst bool, action func([]string, string) string) func(args ...interface{}) interface{} {
+	return thingsActionFactory(name, actOnFirst, func(args []interface{}, arg interface{}) interface{} {
+		str := arg.(string)
+		strs := []string{}
+		for _, val := range args {
+			strs = append(strs, val.(string))
+		}
+		return action(strs, str)
+	})
 }
 
 func stringsModifierActionFactory(a func(string, string) string) func([]string, string) string {
@@ -67,6 +76,9 @@ var FuncMap = template.FuncMap{
 		}
 	},
 
+	"first": thingsActionFactory("first", true, func(args []interface{}, arg interface{}) interface{} { return arg }),
+	"last":  thingsActionFactory("last", false, func(args []interface{}, arg interface{}) interface{} { return arg }),
+
 	"json": func(v interface{}) (string, error) {
 		j, err := json.Marshal(v)
 		return string(j), err
@@ -77,6 +89,4 @@ var FuncMap = template.FuncMap{
 	"replace": stringsActionFactory("replace", false, func(strs []string, str string) string {
 		return strings.NewReplacer(strs...).Replace(str)
 	}),
-	"first": stringsActionFactory("first", true, func(strs []string, str string) string { return str }),
-	"last":  stringsActionFactory("last", false, func(strs []string, str string) string { return str }),
 }
