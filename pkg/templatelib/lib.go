@@ -86,6 +86,8 @@ var FuncMap = template.FuncMap{
 			t = v.Uint() != 0
 		case reflect.Float32, reflect.Float64:
 			t = v.Float() != 0
+		case reflect.String:
+			t = v.String() != ""
 		default:
 			t = !v.IsNil()
 		}
