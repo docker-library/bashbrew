@@ -74,25 +74,9 @@ var FuncMap = template.FuncMap{
 	"hasSuffix": swapStringsFuncBoolArgsOrder(strings.HasSuffix),
 
 	"ternary": func(truthy interface{}, falsey interface{}, val interface{}) interface{} {
-		v := reflect.ValueOf(val)
-
-		var t bool
-		switch v.Kind() {
-		case reflect.Bool:
-			t = v.Bool()
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			t = v.Int() != 0
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			t = v.Uint() != 0
-		case reflect.Float32, reflect.Float64:
-			t = v.Float() != 0
-		case reflect.String:
-			t = v.String() != ""
-		default:
-			t = !v.IsNil()
-		}
-
-		if t {
+		if t, ok := template.IsTrue(val); !ok {
+			panic(fmt.Sprintf(`template.IsTrue(%+v) says things are NOT OK`, val))
+		} else if t {
 			return truthy
 		} else {
 			return falsey
