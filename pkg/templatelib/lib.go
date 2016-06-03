@@ -26,9 +26,11 @@ func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}
 
 			switch v.Kind() {
 			case reflect.Slice, reflect.Array:
-				actArgs = append(actArgs, v.Interface().([]interface{}))
+				for i := 0; i < v.Len(); i++ {
+					actArgs = append(actArgs, v.Index(i).Interface())
+				}
 			default:
-				actArgs = append(actArgs, val)
+				actArgs = append(actArgs, v.Interface())
 			}
 		}
 
