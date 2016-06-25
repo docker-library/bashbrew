@@ -11,31 +11,32 @@ type Pipe struct {
 	out io.ReadCloser
 }
 
-// convenience wrapper for "New"
-func NewCommand(cmd string, args ...string) (*Pipe, error) {
-	return New(exec.Command(cmd, args...))
+// convenience wrapper for "Run"
+func RunCommand(cmd string, args ...string) (*Pipe, error) {
+	return Run(exec.Command(cmd, args...))
 }
 
 // start "cmd", capturing stdout in a pipe (be sure to call "Close" when finished reading to reap the process)
-func New(cmd *exec.Cmd) (*Pipe, error) {
-	p := &Pipe{
+func Run(cmd *exec.Cmd) (*Pipe, error) {
+	pipe := &Pipe{
 		cmd: cmd,
 	}
-	var err error
-	if p.out, err = p.cmd.StdoutPipe(); err != nil {
+	if out, err := pipe.cmd.StdoutPipe(); err != nil {
+		return nil, err
+	} else {
+		pipe.out = out
+	}
+	if err := pipe.cmd.Start(); err != nil {
+		pipe.out.Close()
 		return nil, err
 	}
-	if err := p.cmd.Start(); err != nil {
-		p.out.Close()
-		return nil, err
-	}
-	return p, nil
+	return pipe, nil
 }
 
 func (pipe *Pipe) Read(p []byte) (n int, err error) {
 	return pipe.out.Read(p)
 }
 
-func (p *Pipe) Close() error {
-	return p.cmd.Wait()
+func (pipe *Pipe) Close() error {
+	return pipe.cmd.Wait()
 }
