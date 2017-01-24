@@ -167,6 +167,9 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 	if !GitCommitRegex.MatchString(entry.GitCommit) {
 		return fmt.Errorf(`Tags %q has invalid GitCommit (must be a commit, not a tag or ref): %q`, entry.TagsString(), entry.GitCommit)
 	}
+	if invalidMaintainers := entry.InvalidMaintainers(); len(invalidMaintainers) > 0 {
+		return fmt.Errorf("Tags %q has invalid Maintainers: %q (expected format %q)", strings.Join(invalidMaintainers, ", "), MaintainersFormat)
+	}
 
 	for _, tag := range entry.Tags {
 		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
