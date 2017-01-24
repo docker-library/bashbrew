@@ -173,7 +173,7 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 
 	for _, tag := range entry.Tags {
 		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
-			return fmt.Errorf("Tags %q includes duplicate tag %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
+			return fmt.Errorf("Tags %q includes duplicate tag: %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
 		}
 	}
 
