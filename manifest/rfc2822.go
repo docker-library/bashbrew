@@ -156,8 +156,8 @@ func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
 
 func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 	for _, tag := range entry.Tags {
-		if manifest.GetTag(tag) != nil {
-			return fmt.Errorf("Tags %q includes duplicate tag: %s", entry.TagsString(), tag)
+		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
+			return fmt.Errorf("Tags %q includes duplicate tag %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
 		}
 	}
 
