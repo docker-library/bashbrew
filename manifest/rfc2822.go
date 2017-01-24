@@ -265,10 +265,10 @@ func Parse2822(readerIn io.Reader) (*Manifest2822, error) {
 		}
 
 		if !GitFetchRegex.MatchString(entry.GitFetch) {
-			return fmt.Errorf(`Tags %q has invalid GitFetch (must be "refs/heads/..." or "refs/tags/..."): %q`, entry.TagsString(), entry.GitFetch)
+			return nil, fmt.Errorf(`Tags %q has invalid GitFetch (must be "refs/heads/..." or "refs/tags/..."): %q`, entry.TagsString(), entry.GitFetch)
 		}
 		if !GitCommitRegex.MatchString(entry.GitCommit) {
-			return fmt.Errorf(`Tags %q has invalid GitCommit (must be a commit, not a tag or ref): %q`, entry.TagsString(), entry.GitCommit)
+			return nil, fmt.Errorf(`Tags %q has invalid GitCommit (must be a commit, not a tag or ref): %q`, entry.TagsString(), entry.GitCommit)
 		}
 
 		err = manifest.AddEntry(entry)
