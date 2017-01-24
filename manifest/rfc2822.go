@@ -171,10 +171,15 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 		return fmt.Errorf("Tags %q has invalid Maintainers: %q (expected format %q)", strings.Join(invalidMaintainers, ", "), MaintainersFormat)
 	}
 
+	seenTag := map[string]bool{}
 	for _, tag := range entry.Tags {
 		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
 			return fmt.Errorf("Tags %q includes duplicate tag: %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
 		}
+		if seenTag[tag] {
+			return fmt.Errorf("Tags %q includes duplicate tag: %q", entry.TagsString(), tag)
+		}
+		seenTag[tag] = true
 	}
 
 	for i, existingEntry := range manifest.Entries {
