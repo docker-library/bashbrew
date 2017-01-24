@@ -26,11 +26,14 @@ type Manifest2822Entry struct {
 	control.Paragraph
 
 	Maintainers []string `delim:"," strip:"\n\r\t "`
-	Tags        []string `delim:"," strip:"\n\r\t "`
-	GitRepo     string
-	GitFetch    string
-	GitCommit   string
-	Directory   string
+
+	Tags []string `delim:"," strip:"\n\r\t "`
+
+	GitRepo   string
+	GitFetch  string
+	GitCommit string
+	Directory string
+
 	Constraints []string `delim:"," strip:"\n\r\t "`
 }
 
