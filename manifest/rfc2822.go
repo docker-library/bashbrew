@@ -155,6 +155,19 @@ func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
 }
 
 func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
+	if len(entry.Tags) < 1 {
+		return fmt.Errorf("missing Tags")
+	}
+	if entry.GitRepo == "" || entry.GitFetch == "" || entry.GitCommit == "" {
+		return fmt.Errorf("Tags %q missing one of GitRepo, GitFetch, or GitCommit", entry.TagsString())
+	}
+	if !GitFetchRegex.MatchString(entry.GitFetch) {
+		return fmt.Errorf(`Tags %q has invalid GitFetch (must be "refs/heads/..." or "refs/tags/..."): %q`, entry.TagsString(), entry.GitFetch)
+	}
+	if !GitCommitRegex.MatchString(entry.GitCommit) {
+		return fmt.Errorf(`Tags %q has invalid GitCommit (must be a commit, not a tag or ref): %q`, entry.TagsString(), entry.GitCommit)
+	}
+
 	for _, tag := range entry.Tags {
 		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
 			return fmt.Errorf("Tags %q includes duplicate tag %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
@@ -247,19 +260,6 @@ func Parse2822(readerIn io.Reader) (*Manifest2822, error) {
 		}
 		if err != nil {
 			return nil, err
-		}
-
-		if len(entry.Tags) < 1 {
-			return nil, fmt.Errorf("missing Tags")
-		}
-		if entry.GitRepo == "" || entry.GitFetch == "" || entry.GitCommit == "" {
-			return nil, fmt.Errorf("Tags %q missing one of GitRepo, GitFetch, or GitCommit", entry.TagsString())
-		}
-		if !GitFetchRegex.MatchString(entry.GitFetch) {
-			return nil, fmt.Errorf(`Tags %q has invalid GitFetch (must be "refs/heads/..." or "refs/tags/..."): %q`, entry.TagsString(), entry.GitFetch)
-		}
-		if !GitCommitRegex.MatchString(entry.GitCommit) {
-			return nil, fmt.Errorf(`Tags %q has invalid GitCommit (must be a commit, not a tag or ref): %q`, entry.TagsString(), entry.GitCommit)
 		}
 
 		err = manifest.AddEntry(entry)
