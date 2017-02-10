@@ -197,6 +197,37 @@ func (manifest Manifest2822) GetAllSharedTags() []string {
 	return fakeEntry.SharedTags
 }
 
+type SharedTagGroup struct {
+	SharedTags []string
+	Entries []*Manifest2822Entry
+}
+
+// GetSharedTagGroups returns a map of shared tag groups to the list of entries they share (as described in https://github.com/docker-library/go-dockerlibrary/pull/2#issuecomment-277853597).
+func (manifest Manifest2822) GetSharedTagGroups() []SharedTagGroup {
+	inter := map[string][]string{}
+	interKeySep := ","
+	for _, sharedTag := range manifest.GetAllSharedTags() {
+		interKeyParts := []string{}
+		for _, entry := range manifest.GetSharedTag(sharedTag) {
+			interKeyParts = append(interKeyParts, entry.Tags[0])
+		}
+		interKey := strings.Join(interKeyParts, interKeySep)
+		inter[interKey] = append(inter[interKey], sharedTag)
+	}
+	ret := []SharedTagGroup{}
+	for tags, sharedTags := range inter {
+		group := SharedTagGroup{
+			SharedTags: sharedTags,
+			Entries: []*Manifest2822Entry{},
+		}
+		for _, tag := range strings.Split(tags, interKeySep) {
+			group.Entries = append(group.Entries, manifest.GetTag(tag))
+		}
+		ret = append(ret, group)
+	}
+	return ret
+}
+
 func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 	if len(entry.Tags) < 1 {
 		return fmt.Errorf("missing Tags")
