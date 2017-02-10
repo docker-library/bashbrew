@@ -199,12 +199,13 @@ func (manifest Manifest2822) GetAllSharedTags() []string {
 
 type SharedTagGroup struct {
 	SharedTags []string
-	Entries []*Manifest2822Entry
+	Entries    []*Manifest2822Entry
 }
 
 // GetSharedTagGroups returns a map of shared tag groups to the list of entries they share (as described in https://github.com/docker-library/go-dockerlibrary/pull/2#issuecomment-277853597).
 func (manifest Manifest2822) GetSharedTagGroups() []SharedTagGroup {
 	inter := map[string][]string{}
+	interOrder := []string{} // order matters, and maps randomize order
 	interKeySep := ","
 	for _, sharedTag := range manifest.GetAllSharedTags() {
 		interKeyParts := []string{}
@@ -212,13 +213,16 @@ func (manifest Manifest2822) GetSharedTagGroups() []SharedTagGroup {
 			interKeyParts = append(interKeyParts, entry.Tags[0])
 		}
 		interKey := strings.Join(interKeyParts, interKeySep)
+		if _, ok := inter[interKey]; !ok {
+			interOrder = append(interOrder, interKey)
+		}
 		inter[interKey] = append(inter[interKey], sharedTag)
 	}
 	ret := []SharedTagGroup{}
-	for tags, sharedTags := range inter {
+	for _, tags := range interOrder {
 		group := SharedTagGroup{
-			SharedTags: sharedTags,
-			Entries: []*Manifest2822Entry{},
+			SharedTags: inter[tags],
+			Entries:    []*Manifest2822Entry{},
 		}
 		for _, tag := range strings.Split(tags, interKeySep) {
 			group.Entries = append(group.Entries, manifest.GetTag(tag))
