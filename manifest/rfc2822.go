@@ -27,7 +27,8 @@ type Manifest2822Entry struct {
 
 	Maintainers []string `delim:"," strip:"\n\r\t "`
 
-	Tags []string `delim:"," strip:"\n\r\t "`
+	Tags       []string `delim:"," strip:"\n\r\t "`
+	SharedTags []string `delim:"," strip:"\n\r\t "`
 
 	GitRepo   string
 	GitFetch  string
@@ -46,6 +47,7 @@ func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	// SLICES! grr
 	entry.Maintainers = append([]string{}, entry.Maintainers...)
 	entry.Tags = append([]string{}, entry.Tags...)
+	entry.SharedTags = append([]string{}, entry.SharedTags...)
 	entry.Constraints = append([]string{}, entry.Constraints...)
 	return entry
 }
@@ -58,6 +60,10 @@ func (entry Manifest2822Entry) MaintainersString() string {
 
 func (entry Manifest2822Entry) TagsString() string {
 	return strings.Join(entry.Tags, StringSeparator2822)
+}
+
+func (entry Manifest2822Entry) SharedTagsString() string {
+	return strings.Join(entry.SharedTags, StringSeparator2822)
 }
 
 func (entry Manifest2822Entry) ConstraintsString() string {
@@ -76,6 +82,9 @@ func (entry Manifest2822Entry) ClearDefaults(defaults Manifest2822Entry) Manifes
 	}
 	if entry.TagsString() == defaults.TagsString() {
 		entry.Tags = nil
+	}
+	if entry.SharedTagsString() == defaults.SharedTagsString() {
+		entry.SharedTags = nil
 	}
 	if entry.GitRepo == defaults.GitRepo {
 		entry.GitRepo = ""
@@ -102,6 +111,9 @@ func (entry Manifest2822Entry) String() string {
 	}
 	if str := entry.TagsString(); str != "" {
 		ret = append(ret, "Tags: "+str)
+	}
+	if str := entry.SharedTagsString(); str != "" {
+		ret = append(ret, "SharedTags: "+str)
 	}
 	if str := entry.GitRepo; str != "" {
 		ret = append(ret, "GitRepo: "+str)
@@ -145,6 +157,16 @@ func (entry Manifest2822Entry) HasTag(tag string) bool {
 	return false
 }
 
+// HasSharedTag returns true if the given tag exists in entry.SharedTags.
+func (entry Manifest2822Entry) HasSharedTag(tag string) bool {
+	for _, existingTag := range entry.SharedTags {
+		if tag == existingTag {
+			return true
+		}
+	}
+	return false
+}
+
 func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
 	for _, entry := range manifest.Entries {
 		if entry.HasTag(tag) {
@@ -152,6 +174,62 @@ func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
 		}
 	}
 	return nil
+}
+
+// GetSharedTag returns a list of entries with the given tag in entry.SharedTags (or the empty list if there are no entries with the given tag).
+func (manifest Manifest2822) GetSharedTag(tag string) []Manifest2822Entry {
+	ret := []Manifest2822Entry{}
+	for _, entry := range manifest.Entries {
+		if entry.HasSharedTag(tag) {
+			ret = append(ret, entry)
+		}
+	}
+	return ret
+}
+
+// GetAllSharedTags returns a list of the sum of all SharedTags in all entries of this image manifest (in the order they appear in the file).
+func (manifest Manifest2822) GetAllSharedTags() []string {
+	fakeEntry := Manifest2822Entry{}
+	for _, entry := range manifest.Entries {
+		fakeEntry.SharedTags = append(fakeEntry.SharedTags, entry.SharedTags...)
+	}
+	fakeEntry.DeduplicateSharedTags()
+	return fakeEntry.SharedTags
+}
+
+type SharedTagGroup struct {
+	SharedTags []string
+	Entries    []*Manifest2822Entry
+}
+
+// GetSharedTagGroups returns a map of shared tag groups to the list of entries they share (as described in https://github.com/docker-library/go-dockerlibrary/pull/2#issuecomment-277853597).
+func (manifest Manifest2822) GetSharedTagGroups() []SharedTagGroup {
+	inter := map[string][]string{}
+	interOrder := []string{} // order matters, and maps randomize order
+	interKeySep := ","
+	for _, sharedTag := range manifest.GetAllSharedTags() {
+		interKeyParts := []string{}
+		for _, entry := range manifest.GetSharedTag(sharedTag) {
+			interKeyParts = append(interKeyParts, entry.Tags[0])
+		}
+		interKey := strings.Join(interKeyParts, interKeySep)
+		if _, ok := inter[interKey]; !ok {
+			interOrder = append(interOrder, interKey)
+		}
+		inter[interKey] = append(inter[interKey], sharedTag)
+	}
+	ret := []SharedTagGroup{}
+	for _, tags := range interOrder {
+		group := SharedTagGroup{
+			SharedTags: inter[tags],
+			Entries:    []*Manifest2822Entry{},
+		}
+		for _, tag := range strings.Split(tags, interKeySep) {
+			group.Entries = append(group.Entries, manifest.GetTag(tag))
+		}
+		ret = append(ret, group)
+	}
+	return ret
 }
 
 func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
@@ -165,13 +243,27 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 		return fmt.Errorf("Tags %q has invalid Maintainers: %q (expected format %q)", strings.Join(invalidMaintainers, ", "), MaintainersFormat)
 	}
 
+	entry.DeduplicateSharedTags()
+
 	seenTag := map[string]bool{}
 	for _, tag := range entry.Tags {
 		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
 			return fmt.Errorf("Tags %q includes duplicate tag: %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
 		}
+		if otherEntries := manifest.GetSharedTag(tag); len(otherEntries) > 0 {
+			return fmt.Errorf("Tags %q includes tag conflicting with a shared tag: %q (shared tag in %q)", entry.TagsString(), tag, otherEntries[0].TagsString())
+		}
 		if seenTag[tag] {
 			return fmt.Errorf("Tags %q includes duplicate tag: %q", entry.TagsString(), tag)
+		}
+		seenTag[tag] = true
+	}
+	for _, tag := range entry.SharedTags {
+		if otherEntry := manifest.GetTag(tag); otherEntry != nil {
+			return fmt.Errorf("Tags %q includes conflicting shared tag: %q (duplicated in %q)", entry.TagsString(), tag, otherEntry.TagsString())
+		}
+		if seenTag[tag] {
+			return fmt.Errorf("Tags %q includes duplicate tag: %q (in SharedTags)", entry.TagsString(), tag)
 		}
 		seenTag[tag] = true
 	}
@@ -179,6 +271,8 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 	for i, existingEntry := range manifest.Entries {
 		if existingEntry.SameBuildArtifacts(entry) {
 			manifest.Entries[i].Tags = append(existingEntry.Tags, entry.Tags...)
+			manifest.Entries[i].SharedTags = append(existingEntry.SharedTags, entry.SharedTags...)
+			manifest.Entries[i].DeduplicateSharedTags()
 			return nil
 		}
 	}
@@ -208,6 +302,20 @@ func (entry Manifest2822Entry) InvalidMaintainers() []string {
 		}
 	}
 	return invalid
+}
+
+// DeduplicateSharedTags will remove duplicate values from entry.SharedTags, preserving order.
+func (entry *Manifest2822Entry) DeduplicateSharedTags() {
+	aggregate := []string{}
+	seen := map[string]bool{}
+	for _, tag := range entry.SharedTags {
+		if seen[tag] {
+			continue
+		}
+		seen[tag] = true
+		aggregate = append(aggregate, tag)
+	}
+	entry.SharedTags = aggregate
 }
 
 type decoderWrapper struct {
