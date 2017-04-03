@@ -67,8 +67,6 @@ func stringsModifierActionFactory(a func(string, string) string) func([]string, 
 	}
 }
 
-// TODO write some tests for these
-
 var FuncMap = template.FuncMap{
 	// {{- $isGitHub := hasPrefix "https://github.com/" $url -}}
 	// {{- $isHtml := hasSuffix ".html" $url -}}
