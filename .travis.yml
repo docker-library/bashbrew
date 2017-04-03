@@ -1,5 +1,7 @@
 language: go
 
+go_import_path: github.com/docker-library/go-dockerlibrary
+
 go:
     - 1.8.x
     - 1.7.x
