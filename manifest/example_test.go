@@ -1,6 +1,4 @@
-// +build ignore
-
-package main
+package manifest_test
 
 import (
 	"bufio"
@@ -10,8 +8,7 @@ import (
 	"github.com/docker-library/go-dockerlibrary/manifest"
 )
 
-func main() {
-	// TODO comment parsing
+func Example() {
 	man, err := manifest.Parse(bufio.NewReader(strings.NewReader(`# RFC 2822
 
 	# I LOVE CAKE
@@ -76,4 +73,49 @@ i: g@h j
 		panic(err)
 	}
 	fmt.Printf("-------------\nline-based:\n%v\n", man)
+
+	// Output:
+	// -------------
+	// 2822:
+	// Maintainers: InfoSiftr <github@infosiftr.com> (@infosiftr), Johan Euphrosine <proppy@google.com> (@proppy)
+	// SharedTags: latest
+	// GitRepo: https://github.com/docker-library/golang.git
+	// 
+	// Tags: 1.6.1, 1.6, 1
+	// GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
+	// Directory: 1.6
+	// 
+	// Tags: 1.5.3, 1.5
+	// SharedTags: latest, 1.5.3-debian, 1.5-debian
+	// GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
+	// Directory: 1.5
+	// 
+	// Shared Tag Groups:
+	// 
+	//   - latest
+	//     - 1.6.1, 1.6, 1
+	//     - 1.5.3, 1.5
+	// 
+	//   - 1.5.3-debian, 1.5-debian
+	//     - 1.5.3, 1.5
+	// 
+	// -------------
+	// line-based:
+	// GitFetch: refs/heads/*
+	// 
+	// Tags: a, e
+	// GitRepo: b
+	// GitCommit: c
+	// Directory: d
+	// 
+	// Tags: f
+	// GitRepo: g
+	// GitFetch: refs/tags/h
+	// GitCommit: FETCH_HEAD
+	// 
+	// Tags: i
+	// GitRepo: g
+	// GitFetch: refs/tags/h
+	// GitCommit: FETCH_HEAD
+	// Directory: j
 }
