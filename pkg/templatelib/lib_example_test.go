@@ -7,7 +7,7 @@ import (
 	"github.com/docker-library/go-dockerlibrary/pkg/templatelib"
 )
 
-func ExampleFuncMap_prefixSuffix() {
+func Example_FuncMapPrefixSuffix() {
 	tmpl, err := template.New("github-or-html").Funcs(templatelib.FuncMap).Parse(`
 		{{- . -}}
 
@@ -52,7 +52,7 @@ func ExampleFuncMap_prefixSuffix() {
 	// https://github.com/example/example/raw/master/test.html GitHub HTML
 }
 
-func ExampleFuncMap_ternary() {
+func Example_FuncMapTernary() {
 	tmpl, err := template.New("huge-if-true").Funcs(templatelib.FuncMap).Parse(`
 		{{- range $a := . -}}
 			{{ printf "%#v: %s\n" $a (ternary "HUGE" "not so huge" $a) }}
@@ -90,7 +90,7 @@ func ExampleFuncMap_ternary() {
 	// []bool{false}: HUGE
 }
 
-func ExampleFuncMap_firstLast() {
+func Example_FuncMapFirstLast() {
 	tmpl, err := template.New("first-and-last").Funcs(templatelib.FuncMap).Parse(`First: {{ . | first }}, Last: {{ . | last }}`)
 
 	err = tmpl.Execute(os.Stdout, []interface{}{
@@ -106,7 +106,7 @@ func ExampleFuncMap_firstLast() {
 	// First: a, Last: c
 }
 
-func ExampleFuncMap_json() {
+func Example_FuncMapJson() {
 	tmpl, err := template.New("json").Funcs(templatelib.FuncMap).Parse(`
 		{{- json . -}}
 	`)
@@ -124,7 +124,7 @@ func ExampleFuncMap_json() {
 	// {"a":["1","2","3"],"b":{"1":true,"2":false,"3":true},"c":null}
 }
 
-func ExampleFuncMap_join() {
+func Example_FuncMapJoin() {
 	tmpl, err := template.New("join").Funcs(templatelib.FuncMap).Parse(`
 		Array: {{ . | join ", " }}{{ "\n" -}}
 		Args: {{ join ", " "a" "b" "c" -}}
@@ -144,7 +144,7 @@ func ExampleFuncMap_join() {
 	// Args: a, b, c
 }
 
-func ExampleFuncMap_trimReplaceGitToHttps() {
+func Example_FuncMapTrimReplaceGitToHttps() {
 	tmpl, err := template.New("git-to-https").Funcs(templatelib.FuncMap).Parse(`
 		{{- range . -}}
 			{{- . | replace "git://" "https://" | trimSuffixes ".git" }}{{ "\n" -}}
@@ -166,7 +166,7 @@ func ExampleFuncMap_trimReplaceGitToHttps() {
 	// https://github.com/jsmith/some-repo
 }
 
-func ExampleFuncMap_trimReplaceGitToGo() {
+func Example_FuncMapTrimReplaceGitToGo() {
 	tmpl, err := template.New("git-to-go").Funcs(templatelib.FuncMap).Parse(`
 		{{- range . -}}
 			{{- . | trimPrefixes "git://" "http://" "https://" "ssh://" | trimSuffixes ".git" }}{{ "\n" -}}
