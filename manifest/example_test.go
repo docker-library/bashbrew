@@ -30,6 +30,7 @@ SharedTags: latest
 Tags: 1.6.1, 1.6, 1
 GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
 Directory: 1.6
+Constraints: some-random-build-server
 
 
 # Go 1.5
@@ -87,6 +88,7 @@ i: g@h j
 	// Tags: 1.6.1, 1.6, 1
 	// GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
 	// Directory: 1.6
+	// Constraints: some-random-build-server
 	// 
 	// Tags: 1.5.3, 1.5
 	// SharedTags: latest, 1.5.3-debian, 1.5-debian
