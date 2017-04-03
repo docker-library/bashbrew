@@ -61,6 +61,9 @@ Directory: 1.5
 	fmt.Printf("\n")
 
 	man, err = manifest.Parse(bufio.NewReader(strings.NewReader(`
+# maintainer: InfoSiftr <github@infosiftr.com> (@infosiftr)
+# maintainer: John Smith <jsmith@example.com> (@example-jsmith)
+
 # first set
 a: b@c d
 e: b@c d
@@ -101,6 +104,7 @@ i: g@h j
 	// 
 	// -------------
 	// line-based:
+	// Maintainers: InfoSiftr <github@infosiftr.com> (@infosiftr), John Smith <jsmith@example.com> (@example-jsmith)
 	// GitFetch: refs/heads/*
 	// 
 	// Tags: a, e
