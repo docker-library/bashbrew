@@ -126,7 +126,28 @@ i: g@h j
 	// Directory: j
 }
 
-func ExampleFetch() {
+func ExampleFetch_local() {
+	repoName, tagName, man, err := manifest.Fetch("testdata", "bash:4.4")
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%s:%s\n\n", repoName, tagName)
+
+	fmt.Println(man.GetTag(tagName))
+
+	// Output:
+	// bash:4.4
+	//
+	// Maintainers: Tianon Gravi <admwiggin@gmail.com> (@tianon)
+	// Tags: 4.4.12, 4.4, 4, latest
+	// GitRepo: https://github.com/tianon/docker-bash.git
+	// GitFetch: refs/heads/master
+	// GitCommit: 1cbb5cf49b4c53bd5a986abf7a1afeb9a80eac1e
+	// Directory: 4.4
+}
+
+func ExampleFetch_remote() {
 	repoName, tagName, man, err := manifest.Fetch("/home/jsmith/docker/official-images/library", "https://github.com/docker-library/official-images/raw/1a3c4cd6d5cd53bd538a6f56a69f94c5b35325a7/library/bash:4.4")
 	if err != nil {
 		panic(err)
