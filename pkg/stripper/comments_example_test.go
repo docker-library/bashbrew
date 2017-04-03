@@ -21,7 +21,8 @@ e: f
 
 	comStrip := stripper.NewCommentStripper(r)
 
-	io.Copy(os.Stdout, comStrip)
+	// using CopyBuffer to force smaller Read sizes (better testing coverage that way)
+	io.CopyBuffer(os.Stdout, comStrip, make([]byte, 32))
 
 	// Output:
 	// a: b
