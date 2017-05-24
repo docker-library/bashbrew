@@ -30,6 +30,8 @@ type Manifest2822Entry struct {
 	Tags       []string `delim:"," strip:"\n\r\t "`
 	SharedTags []string `delim:"," strip:"\n\r\t "`
 
+	Architectures []string `delim:"," strip:"\n\r\t "`
+
 	GitRepo   string
 	GitFetch  string
 	GitCommit string
@@ -70,9 +72,28 @@ func (entry Manifest2822Entry) ConstraintsString() string {
 	return strings.Join(entry.Constraints, StringSeparator2822)
 }
 
+func (entry Manifest2822Entry) ArchitecturesString() string {
+	return strings.Join(entry.Architectures, StringSeparator2822)
+}
+
 // if this method returns "true", then a.Tags and b.Tags can safely be combined (for the purposes of building)
 func (a Manifest2822Entry) SameBuildArtifacts(b Manifest2822Entry) bool {
-	return a.GitRepo == b.GitRepo && a.GitFetch == b.GitFetch && a.GitCommit == b.GitCommit && a.Directory == b.Directory && a.ConstraintsString() == b.ConstraintsString()
+	for key,val := range a.Paragraph.Values {
+		if isArchField(key) && val != b.Paragraph.Values[key] {
+			return false
+		}
+	}
+	for key,val := range b.Paragraph.Values {
+		if isArchField(key) && val != a.Paragraph.Values[key] {
+			return false
+		}
+	}
+
+	return a.GitRepo == b.GitRepo && a.GitFetch == b.GitFetch && a.GitCommit == b.GitCommit && a.Directory == b.Directory && a.ConstraintsString() == b.ConstraintsString() && a.ArchitecturesString() == b.ArchitecturesString()
+}
+
+func isArchField(field string) bool {
+	return strings.HasSuffix(field, "-GitRepo") || strings.HasSuffix(field, "-GitFetch") || strings.HasSuffix(field, "-GitCommit") || strings.HasSuffix(field, "-Directory")
 }
 
 // returns a new Entry with any of the values that are equal to the values in "defaults" cleared
@@ -100,6 +121,14 @@ func (entry Manifest2822Entry) ClearDefaults(defaults Manifest2822Entry) Manifes
 	}
 	if entry.ConstraintsString() == defaults.ConstraintsString() {
 		entry.Constraints = nil
+	}
+	if entry.ArchitecturesString() == defaults.ArchitecturesString() {
+		entry.Architectures = nil
+	}
+	for key,val := range defaults.Paragraph.Values {
+		if isArchField(key) && val == entry.Paragraph.Values[key] {
+			delete(entry.Paragraph.Values, key)
+		}
 	}
 	return entry
 }
@@ -130,6 +159,14 @@ func (entry Manifest2822Entry) String() string {
 	if str := entry.ConstraintsString(); str != "" {
 		ret = append(ret, "Constraints: "+str)
 	}
+	if str := entry.ArchitecturesString(); str != "" {
+		ret = append(ret, "Architectures: "+str)
+	}
+	for key,val := range entry.Paragraph.Values {
+		if isArchField(key) {
+			ret = append(ret, key+": "+val)
+		}
+	}
 	return strings.Join(ret, "\n")
 }
 
@@ -146,6 +183,34 @@ func (manifest Manifest2822) String() string {
 	}
 
 	return strings.Join(ret, "\n\n")
+}
+
+func (entry Manifest2822Entry) ArchGitRepo(arch string) string {
+	if val,ok := entry.Paragraph.Values[arch+"-GitRepo"]; ok {
+		return val
+	}
+	return entry.GitRepo
+}
+
+func (entry Manifest2822Entry) ArchGitFetch(arch string) string {
+	if val,ok := entry.Paragraph.Values[arch+"-GitFetch"]; ok {
+		return val
+	}
+	return entry.GitFetch
+}
+
+func (entry Manifest2822Entry) ArchGitCommit(arch string) string {
+	if val,ok := entry.Paragraph.Values[arch+"-GitCommit"]; ok {
+		return val
+	}
+	return entry.GitCommit
+}
+
+func (entry Manifest2822Entry) ArchDirectory(arch string) string {
+	if val,ok := entry.Paragraph.Values[arch+"-Directory"]; ok {
+		return val
+	}
+	return entry.Directory
 }
 
 func (entry Manifest2822Entry) HasTag(tag string) bool {
