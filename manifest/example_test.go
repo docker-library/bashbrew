@@ -15,8 +15,8 @@ func Example() {
 
 Maintainers: InfoSiftr <github@infosiftr.com> (@infosiftr),
              Johan Euphrosine <proppy@google.com> (@proppy)
-GitRepo: https://github.com/docker-library/golang.git
 GitFetch: refs/heads/master
+GitRepo: https://github.com/docker-library/golang.git
 SharedTags: latest
 
 
@@ -28,15 +28,15 @@ SharedTags: latest
 
 # Go 1.6
 Tags: 1.6.1, 1.6, 1
-GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
 Directory: 1.6
+GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
 Constraints: some-random-build-server
 
 
 # Go 1.5
 Tags: 1.5.3
-SharedTags: 1.5.3-debian, 1.5-debian
 GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
+SharedTags: 1.5.3-debian, 1.5-debian
 Directory: 1.5
 
 
@@ -44,6 +44,11 @@ Tags: 1.5
 SharedTags: 1.5-debian
 GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 Directory: 1.5
+
+SharedTags: raspbian
+GitCommit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
+Tags: raspbian-s390x
+Architectures: s390x
 
 
 `)))
@@ -91,18 +96,25 @@ i: g@h j
 	// Constraints: some-random-build-server
 	//
 	// Tags: 1.5.3, 1.5
-	// SharedTags: latest, 1.5.3-debian, 1.5-debian
+	// SharedTags: 1.5.3-debian, 1.5-debian
 	// GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 	// Directory: 1.5
+	//
+	// Tags: raspbian-s390x
+	// SharedTags: raspbian
+	// Architectures: s390x
+	// GitCommit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 	//
 	// Shared Tag Groups:
 	//
 	//   - latest
 	//     - 1.6.1, 1.6, 1
-	//     - 1.5.3, 1.5
 	//
 	//   - 1.5.3-debian, 1.5-debian
 	//     - 1.5.3, 1.5
+	//
+	//   - raspbian
+	//     - raspbian-s390x
 	//
 	// -------------
 	// line-based:
@@ -134,7 +146,7 @@ func ExampleFetch_local() {
 
 	fmt.Printf("%s:%s\n\n", repoName, tagName)
 
-	fmt.Println(man.GetTag(tagName))
+	fmt.Println(man.GetTag(tagName).ClearDefaults(manifest.DefaultManifestEntry).String())
 
 	// Output:
 	// bash:4.4
@@ -142,7 +154,6 @@ func ExampleFetch_local() {
 	// Maintainers: Tianon Gravi <admwiggin@gmail.com> (@tianon)
 	// Tags: 4.4.12, 4.4, 4, latest
 	// GitRepo: https://github.com/tianon/docker-bash.git
-	// GitFetch: refs/heads/master
 	// GitCommit: 1cbb5cf49b4c53bd5a986abf7a1afeb9a80eac1e
 	// Directory: 4.4
 }
@@ -155,7 +166,7 @@ func ExampleFetch_remote() {
 
 	fmt.Printf("%s:%s\n\n", repoName, tagName)
 
-	fmt.Println(man.GetTag(tagName))
+	fmt.Println(man.GetTag(tagName).ClearDefaults(manifest.DefaultManifestEntry).String())
 
 	// Output:
 	// bash:4.4
@@ -163,7 +174,6 @@ func ExampleFetch_remote() {
 	// Maintainers: Tianon Gravi <admwiggin@gmail.com> (@tianon)
 	// Tags: 4.4.12, 4.4, 4, latest
 	// GitRepo: https://github.com/tianon/docker-bash.git
-	// GitFetch: refs/heads/master
 	// GitCommit: 1cbb5cf49b4c53bd5a986abf7a1afeb9a80eac1e
 	// Directory: 4.4
 }

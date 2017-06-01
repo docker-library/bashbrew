@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/docker-library/go-dockerlibrary/pkg/stripper"
@@ -36,11 +37,14 @@ type Manifest2822Entry struct {
 	GitFetch  string
 	GitCommit string
 	Directory string
+	// architecture-specific versions of the above fields are in Paragraph.Values as ARCH-Field, ala s390x-Directory
 
 	Constraints []string `delim:"," strip:"\n\r\t "`
 }
 
 var DefaultManifestEntry = Manifest2822Entry{
+	Architectures: []string{"amd64"},
+
 	GitFetch:  "refs/heads/master",
 	Directory: ".",
 }
@@ -50,6 +54,7 @@ func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	entry.Maintainers = append([]string{}, entry.Maintainers...)
 	entry.Tags = append([]string{}, entry.Tags...)
 	entry.SharedTags = append([]string{}, entry.SharedTags...)
+	entry.Architectures = append([]string{}, entry.Architectures...)
 	entry.Constraints = append([]string{}, entry.Constraints...)
 	return entry
 }
@@ -68,36 +73,44 @@ func (entry Manifest2822Entry) SharedTagsString() string {
 	return strings.Join(entry.SharedTags, StringSeparator2822)
 }
 
-func (entry Manifest2822Entry) ConstraintsString() string {
-	return strings.Join(entry.Constraints, StringSeparator2822)
-}
-
 func (entry Manifest2822Entry) ArchitecturesString() string {
 	return strings.Join(entry.Architectures, StringSeparator2822)
 }
 
+func (entry Manifest2822Entry) ConstraintsString() string {
+	return strings.Join(entry.Constraints, StringSeparator2822)
+}
+
 // if this method returns "true", then a.Tags and b.Tags can safely be combined (for the purposes of building)
 func (a Manifest2822Entry) SameBuildArtifacts(b Manifest2822Entry) bool {
-	for key,val := range a.Paragraph.Values {
-		if isArchField(key) && val != b.Paragraph.Values[key] {
-			return false
-		}
-	}
-	for key,val := range b.Paragraph.Values {
-		if isArchField(key) && val != a.Paragraph.Values[key] {
+	// check xxxarch-GitRepo, etc. fields for sameness first
+	for _, key := range append(a.archFields(), b.archFields()...) {
+		if a.Paragraph.Values[key] != b.Paragraph.Values[key] {
 			return false
 		}
 	}
 
-	return a.GitRepo == b.GitRepo && a.GitFetch == b.GitFetch && a.GitCommit == b.GitCommit && a.Directory == b.Directory && a.ConstraintsString() == b.ConstraintsString() && a.ArchitecturesString() == b.ArchitecturesString()
+	return a.ArchitecturesString() == b.ArchitecturesString() && a.GitRepo == b.GitRepo && a.GitFetch == b.GitFetch && a.GitCommit == b.GitCommit && a.Directory == b.Directory && a.ConstraintsString() == b.ConstraintsString()
 }
 
 func isArchField(field string) bool {
 	return strings.HasSuffix(field, "-GitRepo") || strings.HasSuffix(field, "-GitFetch") || strings.HasSuffix(field, "-GitCommit") || strings.HasSuffix(field, "-Directory")
 }
 
+// returns a list of architecture-specific fields in an Entry
+func (entry Manifest2822Entry) archFields() []string {
+	ret := []string{}
+	for key, val := range entry.Paragraph.Values {
+		if isArchField(key) && val != "" {
+			ret = append(ret, key)
+		}
+	}
+	return ret
+}
+
 // returns a new Entry with any of the values that are equal to the values in "defaults" cleared
 func (entry Manifest2822Entry) ClearDefaults(defaults Manifest2822Entry) Manifest2822Entry {
+	entry = entry.Clone() // make absolutely certain we have a deep clone
 	if entry.MaintainersString() == defaults.MaintainersString() {
 		entry.Maintainers = nil
 	}
@@ -106,6 +119,9 @@ func (entry Manifest2822Entry) ClearDefaults(defaults Manifest2822Entry) Manifes
 	}
 	if entry.SharedTagsString() == defaults.SharedTagsString() {
 		entry.SharedTags = nil
+	}
+	if entry.ArchitecturesString() == defaults.ArchitecturesString() {
+		entry.Architectures = nil
 	}
 	if entry.GitRepo == defaults.GitRepo {
 		entry.GitRepo = ""
@@ -119,16 +135,13 @@ func (entry Manifest2822Entry) ClearDefaults(defaults Manifest2822Entry) Manifes
 	if entry.Directory == defaults.Directory {
 		entry.Directory = ""
 	}
-	if entry.ConstraintsString() == defaults.ConstraintsString() {
-		entry.Constraints = nil
-	}
-	if entry.ArchitecturesString() == defaults.ArchitecturesString() {
-		entry.Architectures = nil
-	}
-	for key,val := range defaults.Paragraph.Values {
-		if isArchField(key) && val == entry.Paragraph.Values[key] {
+	for _, key := range defaults.archFields() {
+		if defaults.Paragraph.Values[key] == entry.Paragraph.Values[key] {
 			delete(entry.Paragraph.Values, key)
 		}
+	}
+	if entry.ConstraintsString() == defaults.ConstraintsString() {
+		entry.Constraints = nil
 	}
 	return entry
 }
@@ -144,6 +157,9 @@ func (entry Manifest2822Entry) String() string {
 	if str := entry.SharedTagsString(); str != "" {
 		ret = append(ret, "SharedTags: "+str)
 	}
+	if str := entry.ArchitecturesString(); str != "" {
+		ret = append(ret, "Architectures: "+str)
+	}
 	if str := entry.GitRepo; str != "" {
 		ret = append(ret, "GitRepo: "+str)
 	}
@@ -156,16 +172,13 @@ func (entry Manifest2822Entry) String() string {
 	if str := entry.Directory; str != "" {
 		ret = append(ret, "Directory: "+str)
 	}
+	archFields := entry.archFields()
+	sort.Strings(archFields) // consistent ordering
+	for _, key := range archFields {
+		ret = append(ret, key+": "+entry.Paragraph.Values[key])
+	}
 	if str := entry.ConstraintsString(); str != "" {
 		ret = append(ret, "Constraints: "+str)
-	}
-	if str := entry.ArchitecturesString(); str != "" {
-		ret = append(ret, "Architectures: "+str)
-	}
-	for key,val := range entry.Paragraph.Values {
-		if isArchField(key) {
-			ret = append(ret, key+": "+val)
-		}
 	}
 	return strings.Join(ret, "\n")
 }
@@ -186,28 +199,28 @@ func (manifest Manifest2822) String() string {
 }
 
 func (entry Manifest2822Entry) ArchGitRepo(arch string) string {
-	if val,ok := entry.Paragraph.Values[arch+"-GitRepo"]; ok {
+	if val, ok := entry.Paragraph.Values[arch+"-GitRepo"]; ok && val != "" {
 		return val
 	}
 	return entry.GitRepo
 }
 
 func (entry Manifest2822Entry) ArchGitFetch(arch string) string {
-	if val,ok := entry.Paragraph.Values[arch+"-GitFetch"]; ok {
+	if val, ok := entry.Paragraph.Values[arch+"-GitFetch"]; ok && val != "" {
 		return val
 	}
 	return entry.GitFetch
 }
 
 func (entry Manifest2822Entry) ArchGitCommit(arch string) string {
-	if val,ok := entry.Paragraph.Values[arch+"-GitCommit"]; ok {
+	if val, ok := entry.Paragraph.Values[arch+"-GitCommit"]; ok && val != "" {
 		return val
 	}
 	return entry.GitCommit
 }
 
 func (entry Manifest2822Entry) ArchDirectory(arch string) string {
-	if val,ok := entry.Paragraph.Values[arch+"-Directory"]; ok {
+	if val, ok := entry.Paragraph.Values[arch+"-Directory"]; ok && val != "" {
 		return val
 	}
 	return entry.Directory
@@ -429,12 +442,23 @@ func Parse2822(readerIn io.Reader) (*Manifest2822, error) {
 	for {
 		entry := manifest.Global.Clone()
 
+		// reset Architectures and SharedTags so that they can be either inherited or replaced, not additive
+		entry.SharedTags = nil
+		entry.Architectures = nil
+
 		err := decoder.Decode(&entry)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return nil, err
+		}
+
+		if len(entry.SharedTags) == 0 {
+			entry.SharedTags = manifest.Global.SharedTags
+		}
+		if len(entry.Architectures) == 0 {
+			entry.Architectures = manifest.Global.Architectures
 		}
 
 		if !GitFetchRegex.MatchString(entry.GitFetch) {
