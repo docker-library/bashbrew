@@ -202,6 +202,10 @@ func (manifest Manifest2822) String() string {
 	return strings.Join(ret, "\n\n")
 }
 
+func (entry *Manifest2822Entry) SetGitRepo(arch string, repo string) {
+	entry.Paragraph.Values[arch+"-GitRepo"] = repo
+}
+
 func (entry Manifest2822Entry) ArchGitRepo(arch string) string {
 	if val, ok := entry.Paragraph.Values[arch+"-GitRepo"]; ok && val != "" {
 		return val
@@ -214,6 +218,10 @@ func (entry Manifest2822Entry) ArchGitFetch(arch string) string {
 		return val
 	}
 	return entry.GitFetch
+}
+
+func (entry *Manifest2822Entry) SetGitCommit(arch string, commit string) {
+	entry.Paragraph.Values[arch+"-GitCommit"] = commit
 }
 
 func (entry Manifest2822Entry) ArchGitCommit(arch string) string {
