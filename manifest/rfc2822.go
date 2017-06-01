@@ -203,6 +203,9 @@ func (manifest Manifest2822) String() string {
 }
 
 func (entry *Manifest2822Entry) SetGitRepo(arch string, repo string) {
+	if entry.Paragraph.Values == nil {
+		entry.Paragraph.Values = map[string]string{}
+	}
 	entry.Paragraph.Values[arch+"-GitRepo"] = repo
 }
 
@@ -221,6 +224,9 @@ func (entry Manifest2822Entry) ArchGitFetch(arch string) string {
 }
 
 func (entry *Manifest2822Entry) SetGitCommit(arch string, commit string) {
+	if entry.Paragraph.Values == nil {
+		entry.Paragraph.Values = map[string]string{}
+	}
 	entry.Paragraph.Values[arch+"-GitCommit"] = commit
 }
 
@@ -251,6 +257,16 @@ func (entry Manifest2822Entry) HasTag(tag string) bool {
 func (entry Manifest2822Entry) HasSharedTag(tag string) bool {
 	for _, existingTag := range entry.SharedTags {
 		if tag == existingTag {
+			return true
+		}
+	}
+	return false
+}
+
+// HasArchitecture returns true if the given architecture exists in entry.Architectures
+func (entry Manifest2822Entry) HasArchitecture(arch string) bool {
+	for _, existingArch := range entry.Architectures {
+		if arch == existingArch {
 			return true
 		}
 	}
