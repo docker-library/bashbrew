@@ -18,6 +18,7 @@ Maintainers: InfoSiftr <github@infosiftr.com> (@infosiftr),
 GitFetch: refs/heads/master
 GitRepo: https://github.com/docker-library/golang.git
 SharedTags: latest
+arm64v8-GitRepo: https://github.com/docker-library/golang.git
 
 
  # hi
@@ -28,6 +29,7 @@ SharedTags: latest
 
 # Go 1.6
 Tags: 1.6.1, 1.6, 1
+arm64v8-GitRepo: https://github.com/docker-library/golang.git
 Directory: 1.6
 GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
 Constraints: some-random-build-server
@@ -38,12 +40,18 @@ Tags: 1.5.3
 GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 SharedTags: 1.5.3-debian, 1.5-debian
 Directory: 1.5
+s390x-GitCommit: b6c460e7cd79b595267870a98013ec3078b490df
+i386-GitFetch: refs/heads/i386
+ppc64le-Directory: 1.5/ppc64le
 
 
 Tags: 1.5
 SharedTags: 1.5-debian
 GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 Directory: 1.5
+s390x-GitCommit: b6c460e7cd79b595267870a98013ec3078b490df
+i386-GitFetch: refs/heads/i386
+ppc64le-Directory: 1.5/ppc64le
 
 SharedTags: raspbian
 GitCommit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
@@ -89,6 +97,7 @@ i: g@h j
 	// Maintainers: InfoSiftr <github@infosiftr.com> (@infosiftr), Johan Euphrosine <proppy@google.com> (@proppy)
 	// SharedTags: latest
 	// GitRepo: https://github.com/docker-library/golang.git
+	// arm64v8-GitRepo: https://github.com/docker-library/golang.git
 	//
 	// Tags: 1.6.1, 1.6, 1
 	// GitCommit: 0ce80411b9f41e9c3a21fc0a1bffba6ae761825a
@@ -99,6 +108,9 @@ i: g@h j
 	// SharedTags: 1.5.3-debian, 1.5-debian
 	// GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 	// Directory: 1.5
+	// i386-GitFetch: refs/heads/i386
+	// ppc64le-Directory: 1.5/ppc64le
+	// s390x-GitCommit: b6c460e7cd79b595267870a98013ec3078b490df
 	//
 	// Tags: raspbian-s390x
 	// SharedTags: raspbian
