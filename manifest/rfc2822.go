@@ -401,15 +401,32 @@ type decoderWrapper struct {
 }
 
 func (decoder *decoderWrapper) Decode(entry *Manifest2822Entry) error {
+	// reset Architectures and SharedTags so that they can be either inherited or replaced, not additive
+	sharedTags := entry.SharedTags
+	entry.SharedTags = nil
+	arches := entry.Architectures
+	entry.Architectures = nil
+
 	for {
 		err := decoder.Decoder.Decode(entry)
 		if err != nil {
 			return err
 		}
+
 		// ignore empty paragraphs (blank lines at the start, excess blank lines between paragraphs, excess blank lines at EOF)
-		if len(entry.Paragraph.Order) > 0 {
-			return nil
+		if len(entry.Paragraph.Order) == 0 {
+			continue
 		}
+
+		// if we had no SharedTags or Architectures, restore our "default" (original) values
+		if len(entry.SharedTags) == 0 {
+			entry.SharedTags = sharedTags
+		}
+		if len(entry.Architectures) == 0 {
+			entry.Architectures = arches
+		}
+
+		return nil
 	}
 }
 
@@ -442,23 +459,12 @@ func Parse2822(readerIn io.Reader) (*Manifest2822, error) {
 	for {
 		entry := manifest.Global.Clone()
 
-		// reset Architectures and SharedTags so that they can be either inherited or replaced, not additive
-		entry.SharedTags = nil
-		entry.Architectures = nil
-
 		err := decoder.Decode(&entry)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			return nil, err
-		}
-
-		if len(entry.SharedTags) == 0 {
-			entry.SharedTags = manifest.Global.SharedTags
-		}
-		if len(entry.Architectures) == 0 {
-			entry.Architectures = manifest.Global.Architectures
 		}
 
 		if !GitFetchRegex.MatchString(entry.GitFetch) {

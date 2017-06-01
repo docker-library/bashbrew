@@ -19,6 +19,7 @@ GitFetch: refs/heads/master
 GitRepo: https://github.com/docker-library/golang.git
 SharedTags: latest
 arm64v8-GitRepo: https://github.com/docker-library/golang.git
+Architectures: amd64
 
 
  # hi
