@@ -42,12 +42,16 @@ type Manifest2822Entry struct {
 	Constraints []string `delim:"," strip:"\n\r\t "`
 }
 
-var DefaultManifestEntry = Manifest2822Entry{
-	Architectures: []string{"amd64"},
+var (
+	DefaultArchitecture = "amd64"
 
-	GitFetch:  "refs/heads/master",
-	Directory: ".",
-}
+	DefaultManifestEntry = Manifest2822Entry{
+		Architectures: []string{DefaultArchitecture},
+
+		GitFetch:  "refs/heads/master",
+		Directory: ".",
+	}
+)
 
 func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	// SLICES! grr
