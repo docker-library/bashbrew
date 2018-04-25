@@ -18,3 +18,36 @@ func TestParseError(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 }
+
+func TestArchFile(t *testing.T) {
+	tests := []struct {
+		file            string
+		defaultArchFile string
+	}{{
+		file:            "",
+		defaultArchFile: "Dockerfile",
+	}, {
+		file:            "Dockerfile",
+		defaultArchFile: "Dockerfile",
+	}, {
+		file:            "Dockerfile-foo",
+		defaultArchFile: "Dockerfile-foo",
+	},
+	}
+
+	for _, test := range tests {
+		manString := `Maintainers: Giuseppe Valente <gvalente@arista.com> (@7AC)
+GitCommit: abcdef
+`
+		if test.file != "" {
+			manString += "File: " + test.file
+		}
+		man, err := manifest.Parse2822(strings.NewReader(manString))
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if man.Global.ArchFile(manifest.DefaultArchitecture) != test.defaultArchFile {
+			t.Fatalf("Unexpected arch file: %s", man.Global.ArchFile(manifest.DefaultArchitecture))
+		}
+	}
+}
