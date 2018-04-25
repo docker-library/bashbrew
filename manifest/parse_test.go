@@ -21,17 +21,25 @@ func TestParseError(t *testing.T) {
 
 func TestArchFile(t *testing.T) {
 	tests := []struct {
-		file            string
-		defaultArchFile string
+		file         string
+		arch         string
+		expectedFile string
 	}{{
-		file:            "",
-		defaultArchFile: "Dockerfile",
+		file:         "",
+		arch:         manifest.DefaultArchitecture,
+		expectedFile: "Dockerfile",
 	}, {
-		file:            "Dockerfile",
-		defaultArchFile: "Dockerfile",
+		file:         "Dockerfile",
+		arch:         manifest.DefaultArchitecture,
+		expectedFile: "Dockerfile",
 	}, {
-		file:            "Dockerfile-foo",
-		defaultArchFile: "Dockerfile-foo",
+		file:         "Dockerfile-foo",
+		arch:         manifest.DefaultArchitecture,
+		expectedFile: "Dockerfile-foo",
+	}, {
+		file:         "Dockerfile-i386",
+		arch:         "i386",
+		expectedFile: "Dockerfile-i386",
 	},
 	}
 
@@ -39,6 +47,9 @@ func TestArchFile(t *testing.T) {
 		manString := `Maintainers: Giuseppe Valente <gvalente@arista.com> (@7AC)
 GitCommit: abcdef
 `
+		if test.arch != manifest.DefaultArchitecture {
+			manString += test.arch + "-"
+		}
 		if test.file != "" {
 			manString += "File: " + test.file
 		}
@@ -46,8 +57,9 @@ GitCommit: abcdef
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}
-		if man.Global.ArchFile(manifest.DefaultArchitecture) != test.defaultArchFile {
-			t.Fatalf("Unexpected arch file: %s", man.Global.ArchFile(manifest.DefaultArchitecture))
+		actualFile := man.Global.ArchFile(test.arch)
+		if actualFile != test.expectedFile {
+			t.Fatalf("Unexpected arch file: %s (expected %q)", actualFile, test.expectedFile)
 		}
 	}
 }
