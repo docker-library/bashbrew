@@ -43,7 +43,7 @@ SharedTags: 1.5.3-debian, 1.5-debian
 Directory: 1.5
 s390x-GitCommit: b6c460e7cd79b595267870a98013ec3078b490df
 i386-GitFetch: refs/heads/i386
-ppc64le-Directory: 1.5/ppc64le
+ppc64le-Directory: 1.5/ppc64le/
 
 
 Tags: 1.5
