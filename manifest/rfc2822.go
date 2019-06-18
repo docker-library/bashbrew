@@ -89,6 +89,14 @@ func (entry *Manifest2822Entry) SeedArchValues() {
 		}
 	}
 }
+func (entry *Manifest2822Entry) CleanDirectoryValues() {
+	entry.Directory = path.Clean(entry.Directory)
+	for field, val := range entry.ArchValues {
+		if strings.HasSuffix(field, "-Directory") && val != "" {
+			entry.ArchValues[field] = path.Clean(val)
+		}
+	}
+}
 
 const StringSeparator2822 = ", "
 
@@ -385,7 +393,7 @@ func (manifest *Manifest2822) AddEntry(entry Manifest2822Entry) error {
 	}
 
 	entry.DeduplicateSharedTags()
-	entry.Directory = path.Clean(entry.Directory)
+	entry.CleanDirectoryValues()
 
 	if invalidArchitectures := entry.InvalidArchitectures(); len(invalidArchitectures) > 0 {
 		return fmt.Errorf("Tags %q has invalid Architectures: %q", entry.TagsString(), strings.Join(invalidArchitectures, ", "))
