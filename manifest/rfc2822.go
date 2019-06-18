@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	GitCommitRegex = regexp.MustCompile(`^[0-9a-f]{1,40}$`)
+	GitCommitRegex = regexp.MustCompile(`^[0-9a-f]{1,64}$`)
 	GitFetchRegex  = regexp.MustCompile(`^refs/(heads|tags)/[^*?:]+$`)
 )
 
