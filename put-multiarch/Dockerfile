@@ -18,6 +18,11 @@ ENV PERL_CPANM_OPT --verbose --mirror https://cpan.metacpan.org
 # reinstall cpanm itself, for good measure
 RUN cpanm App::cpanminus
 
+# useful for debugging
+#  use via: perl -MCarp::Always script.pl ...
+# https://metacpan.org/pod/Carp::Always
+RUN cpanm Carp::Always
+
 RUN set -eux; \
 	savedAptMark="$(apt-mark showmanual)"; \
 	apt-get update; \
@@ -40,11 +45,15 @@ RUN set -eux; \
 	apt-mark manual $savedAptMark > /dev/null; \
 	apt-get purge -y --auto-remove
 
-# https://metacpan.org/pod/release/SRI/Mojolicious-7.94/lib/Mojo/IOLoop.pm#DESCRIPTION
+# https://metacpan.org/pod/release/SRI/Mojolicious-8.21/lib/Mojo/IOLoop.pm#DESCRIPTION
 ENV LIBEV_FLAGS 4
 # epoll (Linux)
 
-RUN cpanm Mojolicious@8.15
+WORKDIR /opt/bashbrew-perl
+COPY lib/Bashbrew.pm lib/
+COPY Makefile.PL ./
+RUN cpanm --installdeps .
+COPY . .
+RUN cpanm .
 
-COPY put-multiarch.pl /usr/local/bin/
-ENTRYPOINT ["put-multiarch.pl"]
+CMD ["./bin/put-multiarch.pl"]
