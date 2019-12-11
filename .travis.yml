@@ -23,4 +23,4 @@ script:
         done
 
 after_script:
-    - bash <(curl -s https://codecov.io/bash)
+    - curl -fL https://codecov.io/bash -o codecov.sh && bash codecov.sh
