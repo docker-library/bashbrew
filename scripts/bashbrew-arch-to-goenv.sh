@@ -1,5 +1,5 @@
 #!/bin/sh
-set -euo pipefail
+set -eu
 
 # usage: (from within another script)
 #   eval "$(./.bashbrew-arch-to-goenv.sh)"
