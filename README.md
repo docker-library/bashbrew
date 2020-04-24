@@ -27,6 +27,7 @@ GLOBAL OPTIONS:
    --debug                  enable more output (esp. all "docker build" output instead of only output on failure) [$BASHBREW_DEBUG]
    --no-sort                do not apply any sorting, even via --build-order
    --arch value             the current platform architecture (default: "amd64") [$BASHBREW_ARCH]
+   --namespace value        a repo namespace to act upon/in [$BASHBREW_NAMESPACE]
    --constraint value       build constraints (see Constraints in Manifest2822Entry) [$BASHBREW_CONSTRAINTS]
    --exclusive-constraints  skip entries which do not have Constraints
    --arch-namespace value   architecture to push namespace mappings for creating indexes/manifest lists ("arch=namespace" ala "s390x=tianons390x") [$BASHBREW_ARCH_NAMESPACES]
@@ -40,7 +41,7 @@ GLOBAL OPTIONS:
 
 Pre-built binaries are available to [download from Jenkins (for a large variety of supported architectures)](https://doi-janky.infosiftr.net/job/bashbrew/lastSuccessfulBuild/artifact/bin/).
 
-For building `bashbrew` yourself, there are clues in [`bashbrew.sh`](bashbrew.sh) and [`.travis.yml`](../.travis.yml) (although it's a pretty standard Go application).
+(For building `bashbrew` yourself, it's a pretty standard Go application.)
 
 ## Usage
 
@@ -50,7 +51,7 @@ In general, `bashbrew build some-repo` or `bashbrew build ./some-file` should be
 
 ## Configuration
 
-The default "flags" configuration is in `~/.config/bashbrew/flags`, but the base path can be overridden with `--config` or `BASHBREW_CONFIG` (technically, the full path to the `flags` configuration file is `${BASHBREW_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/bashbrew}/flags`).
+The default "flags" configuration is in `~/.config/bashbrew/flags`, but the base path can be overridden with `--config` or `BASHBREW_CONFIG` (technically, the full path to the default `flags` configuration file is `${BASHBREW_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/bashbrew}/flags`).
 
 To set a default namespace for specific commands only:
 
@@ -85,4 +86,4 @@ Commands: tag
 Debug: true
 ```
 
-In this example, `bashbrew tag` will get both `Namespace` and `Debug` applied.
+In this example, `bashbrew tag` will get both `Namespace` and `Debug` applied (options are additive).
