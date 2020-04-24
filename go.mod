@@ -1,6 +1,6 @@
 module github.com/docker-library/bashbrew
 
-go 1.13
+go 1.11
 
 require (
 	github.com/codegangsta/cli v1.20.0
