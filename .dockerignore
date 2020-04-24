@@ -1,5 +1,6 @@
 **
-!go/go.*
-!go/src/
-!go/vendor/
+!cmd/
+!go.mod
+!go.sum
 !scripts/bashbrew-arch-to-goenv.sh
+!vendor/

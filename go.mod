@@ -1,4 +1,4 @@
-module bashbrew
+module github.com/docker-library/bashbrew
 
 go 1.13
 

@@ -56,11 +56,9 @@ RUN set -euxo pipefail; \
 	ls -lAFh bin/manifest-tool-*; \
 	file bin/manifest-tool-*
 
-COPY go .
+COPY . .
 
 RUN set -euxo pipefail; \
-	\
-	mkdir -p bin; \
 	\
 	for bashbrewArch in $BASHBREW_ARCHES; do \
 		( \
@@ -69,12 +67,11 @@ RUN set -euxo pipefail; \
 			\
 			targetBin="bin/bashbrew-$bashbrewArch$ext"; \
 			go build \
-				-a -v \
-				-ldflags '-s -w' \
+				-v -ldflags '-s -w' \
 				-tags netgo -installsuffix netgo \
 				-o "$targetBin" \
 				-mod vendor \
-				bashbrew/src/bashbrew \
+				./cmd/bashbrew \
 			; \
 			ls -lAFh "$targetBin"; \
 			file "$targetBin"; \
