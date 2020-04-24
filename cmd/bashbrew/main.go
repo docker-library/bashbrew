@@ -66,8 +66,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "bashbrew"
 	app.Usage = "canonical build tool for the official images"
-	app.Version = "dev"
-	app.HideVersion = true
+	app.Version = version
 	app.EnableBashCompletion = true
 
 	// TODO add "Description" to app and commands (for longer-form description of their functionality)

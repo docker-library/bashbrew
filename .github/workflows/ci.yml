@@ -20,7 +20,7 @@ jobs:
         run: |
           docker build --tag bashbrew --pull .
           docker run --rm bashbrew tar -cC /usr/local/bin bashbrew | tar -xv
-          ./bashbrew --help > /dev/null
+          ./bashbrew --version
       - name: Smoke Test
         run: |
           image='https://github.com/docker-library/official-images/raw/master/library/hello-world'

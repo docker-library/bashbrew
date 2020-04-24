@@ -1,4 +1,5 @@
 **
+!bashbrew.sh
 !cmd/
 !go.mod
 !go.sum

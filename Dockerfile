@@ -9,13 +9,14 @@ RUN apt-get update; \
 	rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/bashbrew
-COPY go.mod go.sum ./
+COPY go.mod go.sum bashbrew.sh ./
 COPY cmd cmd
 COPY vendor vendor
 RUN export CGO_ENABLED=0; \
-	go build -mod vendor -v -o /usr/local/bin/bashbrew ./cmd/bashbrew; \
+	bash -x ./bashbrew.sh --version; \
 	rm -r ~/.cache/go-build; \
-	bashbrew --help > /dev/null
+	mv bin/bashbrew /usr/local/bin/; \
+	bashbrew --version
 
 ENV BASHBREW_CACHE /bashbrew-cache
 # make sure our default cache dir exists and is writable by anyone (similar to /tmp)

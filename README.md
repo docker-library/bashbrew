@@ -10,6 +10,9 @@ NAME:
 USAGE:
    bashbrew [global options] command [command options] [arguments...]
 
+VERSION:
+   v0.1.0
+
 COMMANDS:
      list, ls    list repo:tag combinations for a given repo
      build       build (and tag) repo:tag combinations for a given repo
@@ -35,6 +38,7 @@ GLOBAL OPTIONS:
    --library value          where the bodies are buried (default: "/home/tianon/docker/official-images/library") [$BASHBREW_LIBRARY]
    --cache value            where the git wizardry is stashed (default: "/home/tianon/.cache/bashbrew") [$BASHBREW_CACHE]
    --help, -h, -?           show help
+   --version, -v            print the version
 ```
 
 ## Installing
