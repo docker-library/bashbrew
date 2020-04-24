@@ -2,5 +2,5 @@
 !cmd/
 !go.mod
 !go.sum
-!scripts/bashbrew-arch-to-goenv.sh
+!scripts/
 !vendor/
