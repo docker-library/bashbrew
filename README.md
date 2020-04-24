@@ -1,6 +1,6 @@
 # Bashbrew (`bashbrew`)
 
-[![Jenkins Build Status](https://doi-janky.infosiftr.net/job/bashbrew/badge/icon)](https://doi-janky.infosiftr.net/job/bashbrew/)
+[![Jenkins Build Status](https://doi-janky.infosiftr.net/job/bashbrew/job/master/badge/icon?subject=Jenkins)](https://doi-janky.infosiftr.net/job/bashbrew/job/master/) [![GitHub CI](https://github.com/docker-library/bashbrew/workflows/GitHub%20CI/badge.svg?branch=master&event=push)](https://github.com/docker-library/bashbrew/actions?query=workflow%3A%22GitHub+CI%22)
 
 ```console
 $ bashbrew --help
@@ -39,7 +39,7 @@ GLOBAL OPTIONS:
 
 ## Installing
 
-Pre-built binaries are available to [download from Jenkins (for a large variety of supported architectures)](https://doi-janky.infosiftr.net/job/bashbrew/lastSuccessfulBuild/artifact/bin/).
+Pre-built binaries are available to [download from Jenkins (for all supported architectures)](https://doi-janky.infosiftr.net/job/bashbrew/job/master/lastSuccessfulBuild/artifact/).
 
 (For building `bashbrew` yourself, it's a pretty standard Go application.)
 
