@@ -1,5 +1,5 @@
 **
-!.bashbrew-arch-to-goenv.sh
 !go/go.*
 !go/src/
 !go/vendor/
+!scripts/bashbrew-arch-to-goenv.sh
