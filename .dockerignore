@@ -1,6 +1,5 @@
-*.md
-*.sh
-.dockerignore
-Dockerfile*
-go/bin
+**
 !.bashbrew-arch-to-goenv.sh
+!go/go.*
+!go/src/
+!go/vendor/
