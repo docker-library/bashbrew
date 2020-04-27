@@ -31,18 +31,19 @@ order=()
 declare -A metas=()
 for tag in $tags; do
 	echo >&2 "Processing $tag ..."
+	bashbrewImage="${tag##*/}" # account for BASHBREW_NAMESPACE being set
 	meta="$(
 		bashbrew cat --format '
 			{{- $e := .TagEntry -}}
 			{{- "{" -}}
 				"name": {{- json ($e.Tags | first) -}},
-				"tags": {{- json ($.Tags "" false $e) -}},
+				"tags": {{- json ($.Tags namespace false $e) -}},
 				"directory": {{- json $e.Directory -}},
 				"file": {{- json $e.File -}},
 				"constraints": {{- json $e.Constraints -}},
 				"froms": {{- json ($.DockerFroms $e) -}}
 			{{- "}" -}}
-		' "$tag" | jq -c '
+		' "$bashbrewImage" | jq -c '
 			{
 				name: .name,
 				os: (
@@ -86,9 +87,10 @@ for tag in $tags; do
 		'
 	)"
 
-	parent="$(bashbrew parents "$tag" | tail -1)" # if there ever exists an image with TWO parents in the same repo, this will break :)
+	parent="$(bashbrew parents "$bashbrewImage" | tail -1)" # if there ever exists an image with TWO parents in the same repo, this will break :)
 	if [ -n "$parent" ]; then
-		parent="$(bashbrew list --uniq "$parent")" # normalize
+		parentBashbrewImage="${parent##*/}" # account for BASHBREW_NAMESPACE being set
+		parent="$(bashbrew list --uniq "$parentBashbrewImage")" # normalize
 		parentMeta="${metas["$parent"]}"
 		parentMeta="$(jq -c --argjson meta "$meta" '
 			. + {
