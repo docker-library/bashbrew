@@ -26,6 +26,13 @@ export BASHBREW_LIBRARY="$tmp/library"
 
 eval "${GENERATE_STACKBREW_LIBRARY:-./generate-stackbrew-library.sh}" > "$BASHBREW_LIBRARY/$image"
 
+# if we don't appear to be able to fetch the listed commits, they might live in a PR branch, so we should force them into the Bashbrew cache directly to allow it to do what it needs
+if ! bashbrew from "$image" &> /dev/null; then
+	bashbrewGit="${BASHBREW_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/bashbrew}/git"
+	git -C "$bashbrewGit" fetch --quiet "$PWD" HEAD > /dev/null
+	bashbrew from "$image" > /dev/null
+fi
+
 tags="$(bashbrew list --build-order --uniq "$image")"
 
 # see https://github.com/docker-library/python/commit/6b513483afccbfe23520b1f788978913e025120a for the ideal of what this would be (minimal YAML in all 30+ repos, shared shell script that outputs fully dynamic steps list), if GitHub Actions were to support a fully dynamic steps list
@@ -38,13 +45,14 @@ for tag in $tags; do
 	meta="$(
 		bashbrew cat --format '
 			{{- $e := .TagEntry -}}
+			{{- $arch := $e.HasArchitecture arch | ternary arch ($e.Architectures | first) -}}
 			{{- "{" -}}
 				"name": {{- json ($e.Tags | first) -}},
 				"tags": {{- json ($.Tags namespace false $e) -}},
-				"directory": {{- json $e.Directory -}},
-				"file": {{- json $e.File -}},
+				"directory": {{- json ($e.ArchDirectory $arch) -}},
+				"file": {{- json ($e.ArchFile $arch) -}},
 				"constraints": {{- json $e.Constraints -}},
-				"froms": {{- json ($.DockerFroms $e) -}}
+				"froms": {{- json ($.ArchDockerFroms $arch $e) -}}
 			{{- "}" -}}
 		' "$bashbrewImage" | jq -c '
 			{
