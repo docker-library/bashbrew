@@ -12,10 +12,13 @@ if ! command -v bashbrew &> /dev/null; then
 	dir="$(readlink -f "$BASH_SOURCE")"
 	dir="$(dirname "$dir")"
 	dir="$(cd "$dir/../.." && pwd -P)"
-	echo >&2 'Building bashbrew ...'
-	"$dir/bashbrew.sh" --version > /dev/null
+	if [ ! -x "$dir/bin/bashbrew" ]; then
+		echo >&2 'Building bashbrew ...'
+		"$dir/bashbrew.sh" --version > /dev/null
+		"$dir/bin/bashbrew" --version >&2
+	fi
 	export PATH="$dir/bin:$PATH"
-	bashbrew --version >&2
+	bashbrew --version > /dev/null
 fi
 
 mkdir "$tmp/library"
