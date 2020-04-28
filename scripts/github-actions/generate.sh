@@ -166,7 +166,7 @@ strategy="$(
 						end
 					)
 				] | join("\n")),
-				pull: ([ .meta.froms[] | "docker pull " + @sh ] | join("\n")),
+				pull: ([ .meta.froms[] | select(. != "scratch") | "docker pull " + @sh ] | join("\n")),
 				# build
 				# history
 				# test
