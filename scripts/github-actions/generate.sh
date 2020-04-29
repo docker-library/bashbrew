@@ -29,7 +29,7 @@ eval "${GENERATE_STACKBREW_LIBRARY:-./generate-stackbrew-library.sh}" > "$BASHBR
 # if we don't appear to be able to fetch the listed commits, they might live in a PR branch, so we should force them into the Bashbrew cache directly to allow it to do what it needs
 if ! bashbrew from "$image" &> /dev/null; then
 	bashbrewGit="${BASHBREW_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/bashbrew}/git"
-	git -C "$bashbrewGit" fetch --quiet "$PWD" HEAD > /dev/null
+	git -C "$bashbrewGit" fetch --quiet --update-shallow "$PWD" HEAD > /dev/null
 	bashbrew from "$image" > /dev/null
 fi
 
