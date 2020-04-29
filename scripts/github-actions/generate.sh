@@ -82,7 +82,7 @@ for tag in $tags; do
 							)
 						)
 						+ if .file != "Dockerfile" then
-							[ "--file", (.file | @sh) ]
+							[ "--file", ((.directory + "/" + .file) | @sh) ]
 						else
 							[]
 						end
