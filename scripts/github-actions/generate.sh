@@ -132,6 +132,7 @@ strategy="$(
 				froms: (
 					[ .meta.entries[].froms[] ]
 					- [ .meta.entries[].tags[] ]
+					| unique
 				),
 				dockerfiles: [
 					.meta.entries[]
