@@ -16,9 +16,9 @@ import (
 	"github.com/docker-library/go-dockerlibrary/manifest"
 	"github.com/docker-library/go-dockerlibrary/pkg/execpipe"
 
-	goGit "gopkg.in/src-d/go-git.v4"
-	goGitConfig "gopkg.in/src-d/go-git.v4/config"
-	goGitPlumbing "gopkg.in/src-d/go-git.v4/plumbing"
+	goGit "github.com/go-git/go-git/v5"
+	goGitConfig "github.com/go-git/go-git/v5/config"
+	goGitPlumbing "github.com/go-git/go-git/v5/plumbing"
 )
 
 func gitCache() string {
