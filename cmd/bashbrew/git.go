@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/codegangsta/cli"
+
 	"github.com/docker-library/go-dockerlibrary/manifest"
 	"github.com/docker-library/go-dockerlibrary/pkg/execpipe"
 
@@ -234,12 +236,20 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		//Progress: os.Stdout,
 	})
 	if err != nil {
-		return "", err
+		if fetchErr := fetchGitCommit(arch, entry, gitRemote.Config().URLs[0], fetchString); fetchErr != nil {
+			return "", cli.NewMultiError(err, fetchErr)
+		}
 	}
 
 	commit, err := getGitCommit(entry.ArchGitCommit(arch))
 	if err != nil {
-		return "", err
+		if fetchErr := fetchGitCommit(arch, entry, gitRemote.Config().URLs[0], fetchString); fetchErr != nil {
+			return "", cli.NewMultiError(err, fetchErr)
+		}
+		commit, err = getGitCommit(entry.ArchGitCommit(arch))
+		if err != nil {
+			return "", err
+		}
 	}
 
 	gitTag := gitNormalizeForTagUsage(path.Join(arch, namespace, r.RepoName, entry.Tags[0]))
@@ -252,4 +262,21 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 	gitRepoCache[cacheKey] = commit
 	entry.SetGitCommit(arch, commit)
 	return commit, nil
+}
+
+// this is used as a fallback if using github.com/go-git/go-git/v5 to fetch the branch fails to find the commit
+// Git (and more recently, GitHub) support "git fetch"ing a specific commit directly!
+// (The "actions/checkout@v2" GitHub action uses this to fetch commits for running workflows even after branches are deleted!)
+// https://github.com/git/git/commit/f8edeaa05d8623a9f6dad408237496c51101aad8
+// (Unfortunately, github.com/go-git/go-git/v5 does not support fetching a commit like this from what I can figure [https://github.com/go-git/go-git/issues/56], so we have to shell out.)
+func fetchGitCommit(arch string, entry *manifest.Manifest2822Entry, gitRemote, fetchString string) error {
+	commit := entry.ArchGitCommit(arch)
+	if commit == "FETCH_HEAD" {
+		return fmt.Errorf("cannot fetch line-based entry commit when fetching by tag")
+	}
+
+	fetchString = "+" + commit + ":" + strings.SplitN(fetchString, ":", 2)[1]
+
+	_, err := git(`fetch`, `--quiet`, gitRemote, fetchString)
+	return err
 }
