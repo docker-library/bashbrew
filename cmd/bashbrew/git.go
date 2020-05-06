@@ -268,7 +268,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 // Git (and more recently, GitHub) support "git fetch"ing a specific commit directly!
 // (The "actions/checkout@v2" GitHub action uses this to fetch commits for running workflows even after branches are deleted!)
 // https://github.com/git/git/commit/f8edeaa05d8623a9f6dad408237496c51101aad8
-// (Unfortunately, github.com/go-git/go-git/v5 does not support fetching a commit like this from what I can figure, so we have to shell out.)
+// (Unfortunately, github.com/go-git/go-git/v5 does not support fetching a commit like this from what I can figure [https://github.com/go-git/go-git/issues/56], so we have to shell out.)
 func fetchGitCommit(arch string, entry *manifest.Manifest2822Entry, gitRemote, fetchString string) error {
 	commit := entry.ArchGitCommit(arch)
 	if commit == "FETCH_HEAD" {
