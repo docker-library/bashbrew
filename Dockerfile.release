@@ -60,6 +60,9 @@ RUN export GNUPGHOME="$(mktemp -d)"; \
 	ls -lAFh bin/manifest-tool-*; \
 	file bin/manifest-tool-*
 
+COPY go.mod go.sum ./
+RUN go mod download; go mod verify
+
 COPY . .
 
 RUN for bashbrewArch in $BASHBREW_ARCHES; do \
@@ -78,7 +81,6 @@ RUN for bashbrewArch in $BASHBREW_ARCHES; do \
 				-v -ldflags "$LDFLAGS" \
 				-tags netgo -installsuffix netgo \
 				-o "$targetBin" \
-				-mod vendor \
 				./cmd/bashbrew \
 			; \
 			ls -lAFh "$targetBin"; \

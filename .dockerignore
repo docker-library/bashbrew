@@ -4,4 +4,3 @@
 !go.mod
 !go.sum
 !scripts/
-!vendor/
