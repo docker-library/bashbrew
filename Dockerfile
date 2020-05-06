@@ -4,14 +4,18 @@ SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
 RUN apt-get update; \
 	apt-get install -y --no-install-recommends \
+		git \
 		golang-go \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/bashbrew
-COPY go.mod go.sum bashbrew.sh ./
+
+COPY go.mod go.sum ./
+RUN go mod download; go mod verify
+
+COPY bashbrew.sh ./
 COPY cmd cmd
-COPY vendor vendor
 RUN export CGO_ENABLED=0; \
 	bash -x ./bashbrew.sh --version; \
 	rm -r ~/.cache/go-build; \

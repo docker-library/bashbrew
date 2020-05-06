@@ -9,7 +9,7 @@ dir="$(dirname "$dir")"
 export GO111MODULE=on
 (
 	cd "$dir"
-	go build -o bin/bashbrew -mod vendor ./cmd/bashbrew > /dev/null
+	go build -o bin/bashbrew ./cmd/bashbrew > /dev/null
 )
 
 exec "$dir/bin/bashbrew" "$@"
