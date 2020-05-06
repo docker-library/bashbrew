@@ -27,3 +27,4 @@ jobs:
           ./bashbrew list "$image"
           ./bashbrew list --uniq "$image"
           ./bashbrew cat "$image"
+          ./bashbrew from --uniq "$image"
