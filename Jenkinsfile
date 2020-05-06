@@ -1,9 +1,6 @@
 properties([
 	buildDiscarder(logRotator(daysToKeepStr: '14')),
 	disableConcurrentBuilds(),
-	pipelineTriggers([
-		cron('H H * * *'),
-	]),
 ])
 
 node {
