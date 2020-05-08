@@ -88,6 +88,9 @@ func cmdCat(c *cli.Context) error {
 			}
 			return filtered
 		},
+		"defaults": func() manifest.Manifest2822Entry {
+			return manifest.DefaultManifestEntry
+		},
 	}).Parse(format)
 	if err != nil {
 		return cli.NewMultiError(tmplMultiErr, err)
