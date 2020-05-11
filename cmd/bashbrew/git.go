@@ -180,8 +180,10 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		}
 	}
 
-	fetchString := entry.ArchGitFetch(arch) + ":"
-	if entry.ArchGitCommit(arch) == "FETCH_HEAD" {
+	fetchStrings := []string{
+		entry.ArchGitFetch(arch) + ":",
+	}
+	if entryArchGitCommit := entry.ArchGitCommit(arch); entryArchGitCommit == "FETCH_HEAD" {
 		// fetch remote tag references to a local tag ref so that we can cache them and not re-fetch every time
 		localRef := "refs/tags/" + gitNormalizeForTagUsage(cacheKey)
 		commit, err := getGitCommit(localRef)
@@ -190,7 +192,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 			entry.SetGitCommit(arch, commit)
 			return commit, nil
 		}
-		fetchString += localRef
+		fetchStrings[0] += localRef
 	} else {
 		// we create a temporary remote dir so that we can clean it up completely afterwards
 		refBase := "refs/remotes"
@@ -210,10 +212,19 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		tempRef := path.Join(refBase, filepath.Base(tempRefDir))
 		if entry.ArchGitFetch(arch) == manifest.DefaultLineBasedFetch {
 			// backwards compat (see manifest/line-based.go in go-dockerlibrary)
-			fetchString += tempRef + "/*"
+			fetchStrings[0] += tempRef + "/*"
 		} else {
-			fetchString += tempRef + "/temp"
+			fetchStrings[0] += tempRef + "/temp"
 		}
+
+		fetchStrings = append([]string{
+			// Git (and more recently, GitHub) support "git fetch"ing a specific commit directly!
+			// (The "actions/checkout@v2" GitHub action uses this to fetch commits for running workflows even after branches are deleted!)
+			// https://github.com/git/git/commit/f8edeaa05d8623a9f6dad408237496c51101aad8
+			// https://github.com/go-git/go-git/pull/58
+			// If that works, we want to prefer it (since it'll be much more efficient at getting us the commit we care about), so we prepend it to our list of "things to try fetching"
+			entryArchGitCommit + ":" + tempRef + "/temp",
+		}, fetchStrings...)
 	}
 
 	if strings.HasPrefix(entry.ArchGitRepo(arch), "git://github.com/") {
@@ -229,27 +240,32 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		return "", err
 	}
 
-	err = gitRemote.Fetch(&goGit.FetchOptions{
-		RefSpecs: []goGitConfig.RefSpec{goGitConfig.RefSpec(fetchString)},
-		Tags:     goGit.NoTags,
+	var commit string
+	fetchErrors := []error{}
+	for _, fetchString := range fetchStrings {
+		err := gitRemote.Fetch(&goGit.FetchOptions{
+			RefSpecs: []goGitConfig.RefSpec{goGitConfig.RefSpec(fetchString)},
+			Tags:     goGit.NoTags,
 
-		//Progress: os.Stdout,
-	})
-	if err != nil {
-		if fetchErr := fetchGitCommit(arch, entry, gitRemote.Config().URLs[0], fetchString); fetchErr != nil {
-			return "", cli.NewMultiError(err, fetchErr)
+			//Progress: os.Stdout,
+		})
+		if err != nil {
+			fetchErrors = append(fetchErrors, err)
+			continue
 		}
-	}
 
-	commit, err := getGitCommit(entry.ArchGitCommit(arch))
-	if err != nil {
-		if fetchErr := fetchGitCommit(arch, entry, gitRemote.Config().URLs[0], fetchString); fetchErr != nil {
-			return "", cli.NewMultiError(err, fetchErr)
-		}
 		commit, err = getGitCommit(entry.ArchGitCommit(arch))
 		if err != nil {
-			return "", err
+			fetchErrors = append(fetchErrors, err)
+			continue
 		}
+
+		fetchErrors = nil
+		break
+	}
+
+	if len(fetchErrors) > 0 {
+		return "", cli.NewMultiError(fetchErrors...)
 	}
 
 	gitTag := gitNormalizeForTagUsage(path.Join(arch, namespace, r.RepoName, entry.Tags[0]))
@@ -262,21 +278,4 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 	gitRepoCache[cacheKey] = commit
 	entry.SetGitCommit(arch, commit)
 	return commit, nil
-}
-
-// this is used as a fallback if using github.com/go-git/go-git/v5 to fetch the branch fails to find the commit
-// Git (and more recently, GitHub) support "git fetch"ing a specific commit directly!
-// (The "actions/checkout@v2" GitHub action uses this to fetch commits for running workflows even after branches are deleted!)
-// https://github.com/git/git/commit/f8edeaa05d8623a9f6dad408237496c51101aad8
-// (Unfortunately, github.com/go-git/go-git/v5 does not support fetching a commit like this from what I can figure [https://github.com/go-git/go-git/issues/56], so we have to shell out.)
-func fetchGitCommit(arch string, entry *manifest.Manifest2822Entry, gitRemote, fetchString string) error {
-	commit := entry.ArchGitCommit(arch)
-	if commit == "FETCH_HEAD" {
-		return fmt.Errorf("cannot fetch line-based entry commit when fetching by tag")
-	}
-
-	fetchString = "+" + commit + ":" + strings.SplitN(fetchString, ":", 2)[1]
-
-	_, err := git(`fetch`, `--quiet`, gitRemote, fetchString)
-	return err
 }
