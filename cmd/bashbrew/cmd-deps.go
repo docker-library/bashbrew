@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/codegangsta/cli"
 	"pault.ag/go/topsort"
@@ -26,7 +27,6 @@ func cmdFamily(parents bool, c *cli.Context) error {
 		return cli.NewMultiError(fmt.Errorf(`failed gathering repo list`), err)
 	}
 
-	uniq := c.Bool("uniq")
 	applyConstraints := c.Bool("apply-constraints")
 	depth := c.Int("depth")
 
@@ -99,7 +99,11 @@ func cmdFamily(parents bool, c *cli.Context) error {
 				continue
 			}
 
-			for _, tag := range r.Tags(namespace, uniq, entry) {
+			// we can't include SharedTags here or else they'll make "bashbrew parents something:simple" show the parents of the shared tags too ("nats:scratch" leading to both "nats:alpine" *and* "nats:windowsservercore" instead of just "nats:alpine" like it should), so we have to reimplement bits of "r.Tags" to exclude them
+			tagRepo := path.Join(namespace, r.RepoName)
+			for i, rawTag := range entry.Tags {
+				tag := tagRepo+":"+rawTag
+
 				nodes := []topsortDepthNodes{}
 				if parents {
 					nodes = append(nodes, topsortDepthNodes{
