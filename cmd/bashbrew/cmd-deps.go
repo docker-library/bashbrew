@@ -6,6 +6,8 @@ import (
 
 	"github.com/codegangsta/cli"
 	"pault.ag/go/topsort"
+
+	"github.com/docker-library/go-dockerlibrary/manifest"
 )
 
 func cmdOffspring(c *cli.Context) error {
@@ -27,6 +29,7 @@ func cmdFamily(parents bool, c *cli.Context) error {
 		return cli.NewMultiError(fmt.Errorf(`failed gathering repo list`), err)
 	}
 
+	uniq := c.Bool("uniq")
 	applyConstraints := c.Bool("apply-constraints")
 	depth := c.Int("depth")
 
@@ -87,7 +90,7 @@ func cmdFamily(parents bool, c *cli.Context) error {
 	}
 
 	// now the real work
-	seen := map[*topsort.Node]bool{}
+	seen := map[string]bool{}
 	for _, repo := range depsRepos {
 		r, err := fetch(repo)
 		if err != nil {
@@ -101,8 +104,8 @@ func cmdFamily(parents bool, c *cli.Context) error {
 
 			// we can't include SharedTags here or else they'll make "bashbrew parents something:simple" show the parents of the shared tags too ("nats:scratch" leading to both "nats:alpine" *and* "nats:windowsservercore" instead of just "nats:alpine" like it should), so we have to reimplement bits of "r.Tags" to exclude them
 			tagRepo := path.Join(namespace, r.RepoName)
-			for i, rawTag := range entry.Tags {
-				tag := tagRepo+":"+rawTag
+			for _, rawTag := range entry.Tags {
+				tag := tagRepo + ":" + rawTag
 
 				nodes := []topsortDepthNodes{}
 				if parents {
@@ -123,11 +126,15 @@ func cmdFamily(parents bool, c *cli.Context) error {
 						continue
 					}
 					for _, node := range depthNodes.nodes {
-						if seen[node] {
+						seenKey := node.Name
+						if uniq {
+							seenKey = tagRepo + ":" + node.Value.(*manifest.Manifest2822Entry).Tags[0]
+						}
+						if seen[seenKey] {
 							continue
 						}
-						seen[node] = true
-						fmt.Printf("%s\n", node.Name)
+						seen[seenKey] = true
+						fmt.Printf("%s\n", seenKey)
 						if parents {
 							nodes = append(nodes, topsortDepthNodes{
 								depth: depthNodes.depth + 1,

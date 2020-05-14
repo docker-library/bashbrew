@@ -310,6 +310,7 @@ func main() {
 			Flags: []cli.Flag{
 				commonFlags["apply-constraints"],
 				commonFlags["depth"],
+				commonFlags["uniq"],
 			},
 			Before: subcommandBeforeFactory("children"),
 			Action: cmdOffspring,
@@ -326,6 +327,7 @@ func main() {
 			Flags: []cli.Flag{
 				commonFlags["apply-constraints"],
 				commonFlags["depth"],
+				commonFlags["uniq"],
 			},
 			Before: subcommandBeforeFactory("parents"),
 			Action: cmdParents,
