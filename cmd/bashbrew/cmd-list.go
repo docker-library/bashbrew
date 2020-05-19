@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/codegangsta/cli"
 	"github.com/docker-library/go-dockerlibrary/manifest"
@@ -33,7 +34,7 @@ func cmdList(c *cli.Context) error {
 
 		if onlyRepos {
 			if r.TagEntry == nil {
-				fmt.Printf("%s\n", r.RepoName)
+				fmt.Printf("%s\n", path.Join(namespace, r.RepoName))
 			} else {
 				for _, tag := range r.Tags(namespace, uniq, r.TagEntry) {
 					fmt.Printf("%s\n", tag)
