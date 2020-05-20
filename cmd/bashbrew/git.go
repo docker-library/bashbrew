@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -19,6 +20,8 @@ import (
 	goGit "github.com/go-git/go-git/v5"
 	goGitConfig "github.com/go-git/go-git/v5/config"
 	goGitPlumbing "github.com/go-git/go-git/v5/plumbing"
+	goGitClient "github.com/go-git/go-git/v5/plumbing/transport/client"
+	goGitHttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func gitCache() string {
@@ -72,6 +75,9 @@ func ensureGitInit() error {
 	}
 	config.Raw = config.Raw.SetOption("gc", "", "auto", "0")
 	gitRepo.Storer.SetConfig(config)
+
+	netrcClient := &http.Client{Transport: &netrcTransport{}}
+	goGitClient.InstallProtocol("https", goGitHttp.NewClient(netrcClient))
 
 	return nil
 }
