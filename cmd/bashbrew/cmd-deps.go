@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"pault.ag/go/topsort"
@@ -128,7 +129,7 @@ func cmdFamily(parents bool, c *cli.Context) error {
 					for _, node := range depthNodes.nodes {
 						seenKey := node.Name
 						if uniq {
-							seenKey = tagRepo + ":" + node.Value.(*manifest.Manifest2822Entry).Tags[0]
+							seenKey = seenKey[:strings.Index(seenKey, ":")+1] + node.Value.(*manifest.Manifest2822Entry).Tags[0]
 						}
 						if seen[seenKey] {
 							continue
