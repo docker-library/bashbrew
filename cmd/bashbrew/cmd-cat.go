@@ -8,8 +8,8 @@ import (
 	"text/template"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker-library/go-dockerlibrary/manifest"
-	"github.com/docker-library/go-dockerlibrary/pkg/templatelib"
+	"github.com/docker-library/bashbrew/manifest"
+	"github.com/docker-library/bashbrew/pkg/templatelib"
 )
 
 var DefaultCatFormat = `

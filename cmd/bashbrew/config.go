@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker-library/go-dockerlibrary/pkg/stripper"
+	"github.com/docker-library/bashbrew/pkg/stripper"
 	"pault.ag/go/debian/control"
 )
 

@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/manifest"
 )
 
 type dockerfileMetadata struct {

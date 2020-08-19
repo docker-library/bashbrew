@@ -8,7 +8,7 @@ import (
 	"github.com/codegangsta/cli"
 	"pault.ag/go/topsort"
 
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/manifest"
 )
 
 func cmdOffspring(c *cli.Context) error {

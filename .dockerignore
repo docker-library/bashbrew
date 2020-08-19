@@ -1,6 +1,9 @@
 **
+!architecture/
 !bashbrew.sh
 !cmd/
 !go.mod
 !go.sum
+!manifest/
+!pkg/
 !scripts/

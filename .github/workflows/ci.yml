@@ -27,6 +27,14 @@ jobs:
           bin/bashbrew list --uniq "$image"
           bin/bashbrew cat "$image"
           bin/bashbrew from --uniq "$image"
+  go-test:
+    name: Go Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Go Test
+        run: |
+          docker build --pull --file Dockerfile.test .
   dockerfile:
     name: Test Dockerfile
     runs-on: ubuntu-latest

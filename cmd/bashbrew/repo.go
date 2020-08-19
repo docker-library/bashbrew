@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/manifest"
 )
 
 func repos(all bool, args ...string) ([]string, error) {

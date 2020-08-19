@@ -14,8 +14,7 @@ WORKDIR /usr/src/bashbrew
 COPY go.mod go.sum ./
 RUN go mod download; go mod verify
 
-COPY bashbrew.sh ./
-COPY cmd cmd
+COPY . .
 RUN export CGO_ENABLED=0; \
 	bash -x ./bashbrew.sh --version; \
 	rm -r ~/.cache/go-build; \

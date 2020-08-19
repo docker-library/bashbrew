@@ -9,8 +9,8 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.com/docker-library/go-dockerlibrary/architecture"
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/architecture"
+	"github.com/docker-library/bashbrew/manifest"
 )
 
 func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Manifest2822Entry) (string, time.Time, int, error) {

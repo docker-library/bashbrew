@@ -13,8 +13,8 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.com/docker-library/go-dockerlibrary/manifest"
-	"github.com/docker-library/go-dockerlibrary/pkg/execpipe"
+	"github.com/docker-library/bashbrew/manifest"
+	"github.com/docker-library/bashbrew/pkg/execpipe"
 
 	goGit "github.com/go-git/go-git/v5"
 	goGitConfig "github.com/go-git/go-git/v5/config"
