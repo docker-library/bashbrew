@@ -14,7 +14,7 @@ func TestParseError(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error, got valid manifest instead:\n%s", man)
 	}
-	if !strings.HasPrefix(err.Error(), "cannot parse manifest in either format:") {
+	if !strings.HasPrefix(err.Error(), "Bad line:") {
 		t.Errorf("Unexpected error: %v", err)
 	}
 }
