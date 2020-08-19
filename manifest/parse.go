@@ -2,7 +2,6 @@ package manifest
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
@@ -15,7 +14,9 @@ func Parse(reader io.Reader) (*Manifest2822, error) {
 	if err2822 != nil {
 		manifest, err := ParseLineBased(buf)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse manifest in either format:\nRFC 2822 error: %v\nLine-based error: %v", err2822, err)
+			// if we fail parsing line-based, eat the error and return the 2822 parsing error instead
+			// https://github.com/docker-library/bashbrew/issues/16
+			return nil, err2822
 		}
 		return manifest, nil
 	}
