@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 
 	"github.com/docker-library/bashbrew/architecture"
 	"github.com/docker-library/bashbrew/manifest"

@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"pault.ag/go/topsort"
 
 	"github.com/docker-library/bashbrew/manifest"

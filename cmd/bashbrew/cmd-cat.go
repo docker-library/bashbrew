@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"github.com/docker-library/bashbrew/manifest"
 	"github.com/docker-library/bashbrew/pkg/templatelib"
 )
