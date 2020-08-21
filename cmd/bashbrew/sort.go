@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/manifest"
 	"pault.ag/go/topsort"
 )
 

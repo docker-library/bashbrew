@@ -5,7 +5,7 @@ import (
 	"path"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker-library/go-dockerlibrary/manifest"
+	"github.com/docker-library/bashbrew/manifest"
 )
 
 func cmdList(c *cli.Context) error {

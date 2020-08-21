@@ -1,0 +1,14 @@
+FROM golang:1.13-buster
+
+SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
+
+WORKDIR /usr/src/bashbrew
+
+COPY go.mod go.sum ./
+RUN go mod download; go mod verify
+
+COPY . .
+
+RUN go test -v -race -coverprofile=coverage.out ./...
+
+RUN go tool cover -func=coverage.out
