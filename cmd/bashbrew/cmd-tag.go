@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 func cmdTag(c *cli.Context) error {
