@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 
 	"github.com/urfave/cli"
 )
@@ -47,10 +46,10 @@ func cmdPush(c *cli.Context) error {
 				tag = tagRepo + ":" + tag
 
 				if !force {
-					created := dockerCreated(tag)
-					lastUpdated := fetchDockerHubTagMeta(tag).lastUpdatedTime()
-					if !created.After(lastUpdated) {
-						fmt.Fprintf(os.Stderr, "skipping %s (created %s, last updated %s)\n", tag, created.Local().Format(time.RFC3339), lastUpdated.Local().Format(time.RFC3339))
+					localImageId, _ := dockerInspect("{{.Id}}", tag)
+					registryImageId := fetchRegistryImageId(tag)
+					if registryImageId != "" && localImageId == registryImageId {
+						fmt.Fprintf(os.Stderr, "skipping %s (remote image matches local)\n", tag)
 						continue
 					}
 				}

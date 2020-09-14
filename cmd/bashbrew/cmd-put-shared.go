@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"reflect"
+	"sort"
 	"strings"
-	"time"
 
 	"github.com/urfave/cli"
 
@@ -13,10 +14,9 @@ import (
 	"github.com/docker-library/bashbrew/manifest"
 )
 
-func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Manifest2822Entry) (string, time.Time, int, error) {
+func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Manifest2822Entry) (string, []string, error) {
 	yaml := ""
-	mru := time.Time{}
-	expectedNumber := 0
+	remoteDigests := []string{}
 	entryIdentifiers := []string{}
 	for _, entry := range entries {
 		entryIdentifiers = append(entryIdentifiers, r.EntryIdentifier(entry))
@@ -41,20 +41,18 @@ func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Man
 			}
 
 			archImage := fmt.Sprintf("%s/%s:%s", archNamespace, r.RepoName, entry.Tags[0])
-			archImageMeta := fetchDockerHubTagMeta(archImage)
-			if archU := archImageMeta.lastUpdatedTime(); archU.After(mru) {
-				mru = archU
-			}
 
-			// count up how many images we expect to push successfully in this manifest list
-			expectedNumber += len(archImageMeta.Images)
-			// for non-manifest-list tags, this will be 1 and for failed lookups it'll be 0
+			// keep track of how many images we expect to push successfully in this manifest list (and what their manifest digests are)
+			// for non-manifest-list tags, this will be exactly 1 and for failed lookups it'll be 0
 			// (and if one of _these_ tags is a manifest list, we've goofed somewhere)
-			if len(archImageMeta.Images) != 1 {
-				fmt.Fprintf(os.Stderr, "warning: expected 1 image for %q; got %d\n", archImage, len(archImageMeta.Images))
+			archImageDigests := fetchRegistryManiestListDigests(archImage)
+			if len(archImageDigests) != 1 {
+				fmt.Fprintf(os.Stderr, "warning: expected 1 image for %q; got %d\n", archImage, len(archImageDigests))
 			}
+			remoteDigests = append(remoteDigests, archImageDigests...)
 
-			yaml += fmt.Sprintf("  - image: %s\n    platform:\n", archImage)
+			yaml += fmt.Sprintf("  - image: %s\n", archImage)
+			yaml += fmt.Sprintf("    platform:\n")
 			yaml += fmt.Sprintf("      os: %s\n", ociArch.OS)
 			yaml += fmt.Sprintf("      architecture: %s\n", ociArch.Architecture)
 			if ociArch.Variant != "" {
@@ -62,8 +60,7 @@ func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Man
 			}
 		}
 	}
-
-	return "manifests:\n" + yaml, mru, expectedNumber, nil
+	return "manifests:\n" + yaml, remoteDigests, nil
 }
 
 func tagsToManifestToolYaml(repo string, tags ...string) string {
@@ -130,37 +127,25 @@ func cmdPutShared(c *cli.Context) error {
 
 		failed := []string{}
 		for _, group := range sharedTagGroups {
-			yaml, mostRecentPush, expectedNumber, err := entriesToManifestToolYaml(singleArch, *r, group.Entries...)
+			yaml, expectedRemoteDigests, err := entriesToManifestToolYaml(singleArch, *r, group.Entries...)
 			if err != nil {
 				return err
 			}
 
-			if expectedNumber < 1 {
-				// if "expectedNumber" comes back as 0, we've probably got an API issue, so let's count up what we probably _should_ push
+			sort.Strings(expectedRemoteDigests)
+			if len(expectedRemoteDigests) < 1 {
+				// if "expectedRemoteDigests" comes back empty, we've probably got an API issue (or a build error/push timing problem)
 				fmt.Fprintf(os.Stderr, "warning: no images expected to push for %q\n", fmt.Sprintf("%s:%s", targetRepo, group.SharedTags[0]))
-				for _, entry := range group.Entries {
-					expectedNumber += len(entry.Architectures)
-				}
 			}
 
 			tagsToPush := []string{}
 			for _, tag := range group.SharedTags {
 				image := fmt.Sprintf("%s:%s", targetRepo, tag)
 				if !force {
-					hubMeta := fetchDockerHubTagMeta(image)
-					tagUpdated := hubMeta.lastUpdatedTime()
-					doPush := false
-					if mostRecentPush.After(tagUpdated) {
-						// if one of the images that make up the manifest list has been updated since the manifest list was last pushed, we probably need to push
-						doPush = true
-					}
-					if !singleArch && len(hubMeta.Images) != expectedNumber {
-						// if we're supposed to push more (or less) images than the current manifest list contains, we probably need to push
-						// this _should_ already be accounting for tags that haven't been pushed yet (see notes above in "entriesToManifestToolYaml" where this is calculated)
-						doPush = true
-					}
-					if !doPush {
-						fmt.Fprintf(os.Stderr, "skipping %s (created %s, last updated %s)\n", image, mostRecentPush.Local().Format(time.RFC3339), tagUpdated.Local().Format(time.RFC3339))
+					remoteDigests := fetchRegistryManiestListDigests(image)
+					sort.Strings(remoteDigests)
+					if reflect.DeepEqual(remoteDigests, expectedRemoteDigests) {
+						fmt.Fprintf(os.Stderr, "skipping %s (%d remote digests up-to-date)\n", image, len(remoteDigests))
 						continue
 					}
 				}
