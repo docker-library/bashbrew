@@ -144,6 +144,11 @@ func cmdPutShared(c *cli.Context) error {
 				if !force {
 					remoteDigests := fetchRegistryManiestListDigests(image)
 					sort.Strings(remoteDigests)
+					if len(expectedRemoteDigests) == 0 && remoteDigests == nil {
+						// https://github.com/golang/go/issues/12918 ...
+						remoteDigests = []string{}
+						// ("fetchRegistryManiestListDigests" returns a nil slice for things like 404, which if we expect to push 0 items is exactly what we want/expect)
+					}
 					if reflect.DeepEqual(remoteDigests, expectedRemoteDigests) {
 						fmt.Fprintf(os.Stderr, "skipping %s (%d remote digests up-to-date)\n", image, len(remoteDigests))
 						continue
