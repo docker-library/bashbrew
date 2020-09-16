@@ -1,13 +1,6 @@
-FROM tianon/docker-tianon
+FROM golang:1.13-buster AS build
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
-
-RUN apt-get update; \
-	apt-get install -y --no-install-recommends \
-		git \
-		golang-go \
-	; \
-	rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/bashbrew
 
@@ -15,11 +8,22 @@ COPY go.mod go.sum ./
 RUN go mod download; go mod verify
 
 COPY . .
-RUN export CGO_ENABLED=0; \
-	bash -x ./bashbrew.sh --version; \
-	rm -r ~/.cache/go-build; \
-	mv bin/bashbrew /usr/local/bin/; \
-	bashbrew --version
+
+RUN CGO_ENABLED=0 ./bashbrew.sh --version; \
+	cp -al bin/bashbrew /
+
+FROM tianon/docker-tianon
+
+SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
+
+RUN apt-get update; \
+	apt-get install -y --no-install-recommends \
+		git \
+	; \
+	rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /bashbrew /usr/local/bin/
+RUN bashbrew --version
 
 ENV BASHBREW_CACHE /bashbrew-cache
 # make sure our default cache dir exists and is writable by anyone (similar to /tmp)
