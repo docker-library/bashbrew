@@ -14,6 +14,8 @@ import (
 	"github.com/docker-library/bashbrew/manifest"
 )
 
+var errPutShared404 = fmt.Errorf("nothing to push")
+
 func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Manifest2822Entry) (string, []string, error) {
 	yaml := ""
 	remoteDigests := []string{}
@@ -60,6 +62,12 @@ func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Man
 			}
 		}
 	}
+
+	if yaml == "" {
+		// we're not even going to try pushing something, so let's inform the caller of that to skip the unnecessary call to "manifest-tool"
+		return "", nil, errPutShared404
+	}
+
 	return "manifests:\n" + yaml, remoteDigests, nil
 }
 
@@ -128,7 +136,10 @@ func cmdPutShared(c *cli.Context) error {
 		failed := []string{}
 		for _, group := range sharedTagGroups {
 			yaml, expectedRemoteDigests, err := entriesToManifestToolYaml(singleArch, *r, group.Entries...)
-			if err != nil {
+			if err == errPutShared404 {
+				fmt.Fprintf(os.Stderr, "skipping %s (nothing to push)\n", fmt.Sprintf("%s:%s", targetRepo, group.SharedTags[0]))
+				continue
+			} else if err != nil {
 				return err
 			}
 
