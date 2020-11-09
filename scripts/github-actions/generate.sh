@@ -154,7 +154,7 @@ strategy="$(
 						end
 					),
 					"git clone --depth 1 https://github.com/docker-library/official-images.git -b master ~/oi",
-					"# create a dummy empty image/layer so we can --filter since= later to get a meanginful image list",
+					"# create a dummy empty image/layer so we can --filter since= later to get a meaningful image list",
 					"{ echo FROM " + (
 						if (.os | startswith("windows-")) then
 							"mcr.microsoft.com/windows/servercore:ltsc" + (.os | ltrimstr("windows-"))
