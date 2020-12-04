@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"reflect"
-	"sort"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -143,7 +142,6 @@ func cmdPutShared(c *cli.Context) error {
 				return err
 			}
 
-			sort.Strings(expectedRemoteDigests)
 			if len(expectedRemoteDigests) < 1 {
 				// if "expectedRemoteDigests" comes back empty, we've probably got an API issue (or a build error/push timing problem)
 				fmt.Fprintf(os.Stderr, "warning: no images expected to push for %q\n", fmt.Sprintf("%s:%s", targetRepo, group.SharedTags[0]))
@@ -154,7 +152,6 @@ func cmdPutShared(c *cli.Context) error {
 				image := fmt.Sprintf("%s:%s", targetRepo, tag)
 				if !force {
 					remoteDigests := fetchRegistryManiestListDigests(image)
-					sort.Strings(remoteDigests)
 					if len(expectedRemoteDigests) == 0 && remoteDigests == nil {
 						// https://github.com/golang/go/issues/12918 ...
 						remoteDigests = []string{}
