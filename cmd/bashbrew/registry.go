@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"net/url"
+	"os"
 
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/reference/docker"
@@ -125,5 +127,19 @@ func fetchRegistryResolveHelper(image string) (string, remotes.Resolver, error) 
 		namedRef = docker.TagNameOnly(namedRef)
 		ref = namedRef
 	}
-	return ref.String(), dockerremote.NewResolver(dockerremote.ResolverOptions{}), nil
+	return ref.String(), dockerremote.NewResolver(dockerremote.ResolverOptions{
+		Host: func(host string) (string, error) {
+			if host == "docker.io" {
+				if publicProxy := os.Getenv("DOCKERHUB_PUBLIC_PROXY"); publicProxy != "" {
+					if publicProxyURL, err := url.Parse(publicProxy); err == nil {
+						// TODO Scheme (also not sure if "host:port" will be satisfactory to containerd here, but 🤷)
+						return publicProxyURL.Host, nil
+					} else {
+						return "", err
+					}
+				}
+			}
+			return host, nil
+		},
+	}), nil
 }
