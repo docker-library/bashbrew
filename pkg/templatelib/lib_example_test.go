@@ -8,7 +8,7 @@ import (
 )
 
 func Example_prefixSuffix() {
-	tmpl, err := template.New("github-or-html").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("github-or-html").Funcs(templatelib.FuncMap()).Parse(`
 		{{- . -}}
 
 		{{- if hasPrefix "https://github.com/" . -}}
@@ -53,7 +53,7 @@ func Example_prefixSuffix() {
 }
 
 func Example_ternary() {
-	tmpl, err := template.New("huge-if-true").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("huge-if-true").Funcs(templatelib.FuncMap()).Parse(`
 		{{- range $a := . -}}
 			{{ printf "%#v: %s\n" $a (ternary "HUGE" "not so huge" $a) }}
 		{{- end -}}
@@ -91,7 +91,7 @@ func Example_ternary() {
 }
 
 func Example_firstLast() {
-	tmpl, err := template.New("first-and-last").Funcs(templatelib.FuncMap).Parse(`First: {{ . | first }}, Last: {{ . | last }}`)
+	tmpl, err := template.New("first-and-last").Funcs(templatelib.FuncMap()).Parse(`First: {{ . | first }}, Last: {{ . | last }}`)
 
 	err = tmpl.Execute(os.Stdout, []interface{}{
 		"a",
@@ -107,7 +107,7 @@ func Example_firstLast() {
 }
 
 func Example_json() {
-	tmpl, err := template.New("json").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("json").Funcs(templatelib.FuncMap()).Parse(`
 		{{- json . -}}
 	`)
 
@@ -125,7 +125,7 @@ func Example_json() {
 }
 
 func Example_join() {
-	tmpl, err := template.New("join").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("join").Funcs(templatelib.FuncMap()).Parse(`
 		Array: {{ . | join ", " }}{{ "\n" -}}
 		Args: {{ join ", " "a" "b" "c" -}}
 	`)
@@ -145,7 +145,7 @@ func Example_join() {
 }
 
 func Example_trimReplaceGitToHttps() {
-	tmpl, err := template.New("git-to-https").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("git-to-https").Funcs(templatelib.FuncMap()).Parse(`
 		{{- range . -}}
 			{{- . | replace "git://" "https://" | trimSuffixes ".git" }}{{ "\n" -}}
 		{{- end -}}
@@ -167,7 +167,7 @@ func Example_trimReplaceGitToHttps() {
 }
 
 func Example_trimReplaceGitToGo() {
-	tmpl, err := template.New("git-to-go").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("git-to-go").Funcs(templatelib.FuncMap()).Parse(`
 		{{- range . -}}
 			{{- . | trimPrefixes "git://" "http://" "https://" "ssh://" | trimSuffixes ".git" }}{{ "\n" -}}
 		{{- end -}}
@@ -193,7 +193,7 @@ func Example_trimReplaceGitToGo() {
 }
 
 func Example_getenv() {
-	tmpl, err := template.New("getenv").Funcs(templatelib.FuncMap).Parse(`
+	tmpl, err := template.New("getenv").Funcs(templatelib.FuncMap()).Parse(`
 		The FOO environment variable {{ getenv "FOO" "is set" "is not set" }}. {{- "\n" -}}
 		BAR: {{ getenv "BAR" "not set" }} {{- "\n" -}}
 		BAZ: {{ getenv "BAZ" "not set" }} {{- "\n" -}}
