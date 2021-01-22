@@ -50,6 +50,7 @@ function append_jq(expr) {
 	if (!expr) return
 	expr = trim(expr)
 	if (!expr) return
+	if (expr ~ /^#[^\n]*$/) return # ignore pure comment lines {{ # ... -}}
 	if (expr ~ /^(def|include|import)[[:space:]]/) { # a few things need to go at the start of our "script"
 		jq_expr_defs = jq_expr_defs expr ";\n"
 		return
