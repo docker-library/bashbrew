@@ -31,7 +31,7 @@ type Manifest2822 struct {
 type Manifest2822Entry struct {
 	control.Paragraph
 
-	Maintainers []string `delim:"," strip:"\n\r\t "`
+	Maintainers []Manifest2822Maintainer `delim:"," strip:"\n\r\t "`
 
 	Tags       []string `delim:"," strip:"\n\r\t "`
 	SharedTags []string `delim:"," strip:"\n\r\t "`
@@ -51,6 +51,12 @@ type Manifest2822Entry struct {
 	// (sourced from Paragraph.Values via .SeedArchValues())
 
 	Constraints []string `delim:"," strip:"\n\r\t "`
+}
+
+type Manifest2822Maintainer struct {
+	Name   string
+	Email  string
+	Handle string
 }
 
 var (
@@ -75,7 +81,7 @@ func deepCopyStringsMap(a map[string]string) map[string]string {
 
 func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	// SLICES! grr
-	entry.Maintainers = append([]string{}, entry.Maintainers...)
+	entry.Maintainers = append([]Manifest2822Maintainer{}, entry.Maintainers...)
 	entry.Tags = append([]string{}, entry.Tags...)
 	entry.SharedTags = append([]string{}, entry.SharedTags...)
 	entry.Architectures = append([]string{}, entry.Architectures...)
@@ -104,7 +110,11 @@ func (entry *Manifest2822Entry) CleanDirectoryValues() {
 const StringSeparator2822 = ", "
 
 func (entry Manifest2822Entry) MaintainersString() string {
-	return strings.Join(entry.Maintainers, StringSeparator2822)
+	maintainers := []string{}
+	for _, maint := range entry.Maintainers {
+		maintainers = append(maintainers, maint.String())
+	}
+	return strings.Join(maintainers, StringSeparator2822)
 }
 
 func (entry Manifest2822Entry) TagsString() string {
@@ -454,11 +464,31 @@ var (
 	MaintainersRegex = regexp.MustCompile(`^(` + MaintainersNameRegex + `)(?:\s+<(` + MaintainersEmailRegex + `)>)?\s+[(]@(` + MaintainersGitHubRegex + `)[)]$`)
 )
 
+func (maint Manifest2822Maintainer) String() string {
+	ret := []string{maint.Name}
+	if maint.Email != "" {
+		ret = append(ret, "<"+maint.Email+">")
+	}
+	ret = append(ret, "(@"+maint.Handle+")")
+	return strings.Join(ret, " ")
+}
+
+func (maint *Manifest2822Maintainer) UnmarshalControl(data string) error {
+	if matches := MaintainersRegex.FindStringSubmatch(data); len(matches) > 0 {
+		maint.Name = matches[1]
+		maint.Email = matches[2]
+		maint.Handle = matches[3]
+		return nil
+	}
+	return fmt.Errorf("invalid Maintainers: %q (expected format %q)", data, MaintainersFormat)
+}
+
 func (entry Manifest2822Entry) InvalidMaintainers() []string {
 	invalid := []string{}
 	for _, maintainer := range entry.Maintainers {
-		if !MaintainersRegex.MatchString(maintainer) {
-			invalid = append(invalid, maintainer)
+		// normally these would already be caught by the parsing regex, but just in case someone made an invalid object by hand or something, let's re-validate
+		if maintainer.Name == "" || maintainer.Handle == "" {
+			invalid = append(invalid, maintainer.String())
 		}
 	}
 	return invalid

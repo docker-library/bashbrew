@@ -57,7 +57,11 @@ func ParseLineBased(readerIn io.Reader) (*Manifest2822, error) {
 				maintainerLine := strings.TrimPrefix(line, "# maintainer: ")
 				if line != maintainerLine {
 					// if the prefix was removed, it must be a maintainer line!
-					manifest.Global.Maintainers = append(manifest.Global.Maintainers, maintainerLine)
+					maintainer := Manifest2822Maintainer{}
+					if err := maintainer.UnmarshalControl(maintainerLine); err != nil {
+						return nil, err
+					}
+					manifest.Global.Maintainers = append(manifest.Global.Maintainers, maintainer)
 				}
 			} else {
 				entry, parseErr := ParseLineBasedLine(line, manifest.Global)
