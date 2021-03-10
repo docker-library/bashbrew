@@ -1,4 +1,4 @@
-FROM golang:1.13-buster
+FROM golang:1.16-buster
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
@@ -23,6 +23,7 @@ ENV BASHBREW_ARCHES \
 		i386 \
 		mips64le \
 		ppc64le \
+		riscv64 \
 		s390x \
 		windows-amd64
 
@@ -39,6 +40,8 @@ RUN export GNUPGHOME="$(mktemp -d)"; \
 	mkdir -p bin; \
 	\
 	for bashbrewArch in $BASHBREW_ARCHES; do \
+# TODO convince estesp to release riscv64 binaries (https://github.com/estesp/manifest-tool/pull/113 👀)
+		if [ "$bashbrewArch" = 'riscv64' ]; then continue; fi; \
 		( \
 			goEnv="$(bashbrew-arch-to-goenv.sh "$bashbrewArch")"; eval "$goEnv"; \
 			srcBin="manifest-tool-$GOOS-$GOARCH"; \

@@ -20,6 +20,7 @@ var SupportedArches = map[string]OCIPlatform{
 	"i386":     {OS: "linux", Architecture: "386"},
 	"mips64le": {OS: "linux", Architecture: "mips64le"},
 	"ppc64le":  {OS: "linux", Architecture: "ppc64le"},
+	"riscv64":  {OS: "linux", Architecture: "riscv64"},
 	"s390x":    {OS: "linux", Architecture: "s390x"},
 
 	"windows-amd64": {OS: "windows", Architecture: "amd64"},
