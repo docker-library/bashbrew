@@ -93,7 +93,7 @@ func cmdBuild(c *cli.Context) error {
 
 					// TODO use "meta.StageNames" to do "docker build --target" so we can tag intermediate stages too for cache (streaming "git archive" directly to "docker build" makes that a little hard to accomplish without re-streaming)
 
-					err = dockerBuild(cacheTag, entry.ArchFile(arch), archive)
+					err = dockerBuild(cacheTag, entry.ArchFile(arch), archive, commit)
 					if err != nil {
 						return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 					}
