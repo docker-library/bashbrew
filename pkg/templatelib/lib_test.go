@@ -12,7 +12,7 @@ import (
 func TestTernaryPanic(t *testing.T) {
 	// one of the only places template.IsTrue will return "false" for the "ok" value is an UnsafePointer (hence this test)
 
-	tmpl, err := template.New("unsafe-pointer").Funcs(templatelib.FuncMap).Parse(`{{ ternary "true" "false" . }}`)
+	tmpl, err := template.New("unsafe-pointer").Funcs(templatelib.FuncMap()).Parse(`{{ ternary "true" "false" . }}`)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestTernaryPanic(t *testing.T) {
 }
 
 func TestJoinPanic(t *testing.T) {
-	tmpl, err := template.New("join-no-arg").Funcs(templatelib.FuncMap).Parse(`{{ join }}`)
+	tmpl, err := template.New("join-no-arg").Funcs(templatelib.FuncMap()).Parse(`{{ join }}`)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

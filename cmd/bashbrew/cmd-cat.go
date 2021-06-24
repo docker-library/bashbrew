@@ -48,7 +48,7 @@ func cmdCat(c *cli.Context) error {
 	}
 
 	var i int
-	tmpl, err := template.New(templateName).Funcs(templatelib.FuncMap).Funcs(template.FuncMap{
+	tmpl, err := template.New(templateName).Funcs(templatelib.FuncMap()).Funcs(template.FuncMap{
 		"i": func() int {
 			return i
 		},
