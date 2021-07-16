@@ -17,6 +17,18 @@ function jq_escape(str,          # parameters
 	return out
 }
 
+# return the number of times needle appears in haystack
+function num(haystack, needle, # parameters
+             ret, i          ) # locals
+{
+	ret = 0
+	while (i = index(haystack, needle)) {
+		ret++
+		haystack = substr(haystack, i + length(needle))
+	}
+	return ret
+}
+
 BEGIN {
 	jq_expr_defs = ""
 	jq_expr = ""
@@ -76,7 +88,7 @@ function append_jq(expr) {
 		agg_jq = agg_jq line
 		line = ""
 
-		if (!index(agg_jq, CLOSE)) {
+		if (num(agg_jq, OPEN) > num(agg_jq, CLOSE)) {
 			next
 		}
 
