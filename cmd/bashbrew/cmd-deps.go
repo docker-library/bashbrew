@@ -32,6 +32,7 @@ func cmdFamily(parents bool, c *cli.Context) error {
 
 	uniq := c.Bool("uniq")
 	applyConstraints := c.Bool("apply-constraints")
+	archFilter := c.Bool("arch-filter")
 	depth := c.Int("depth")
 
 	allRepos, err := repos(true)
@@ -53,6 +54,9 @@ func cmdFamily(parents bool, c *cli.Context) error {
 			if applyConstraints && r.SkipConstraints(entry) {
 				continue
 			}
+			if archFilter && !entry.HasArchitecture(arch) {
+				continue
+			}
 
 			for _, tag := range r.Tags(namespace, false, entry) {
 				network.AddNode(tag, entry)
@@ -70,9 +74,12 @@ func cmdFamily(parents bool, c *cli.Context) error {
 			if applyConstraints && r.SkipConstraints(entry) {
 				continue
 			}
+			if archFilter && !entry.HasArchitecture(arch) {
+				continue
+			}
 
 			entryArches := []string{arch}
-			if !applyConstraints {
+			if !applyConstraints && !archFilter {
 				entryArches = entry.Architectures
 			}
 
@@ -100,6 +107,9 @@ func cmdFamily(parents bool, c *cli.Context) error {
 
 		for _, entry := range r.Entries() {
 			if applyConstraints && r.SkipConstraints(entry) {
+				continue
+			}
+			if archFilter && !entry.HasArchitecture(arch) {
 				continue
 			}
 

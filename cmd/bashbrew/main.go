@@ -210,7 +210,11 @@ func main() {
 		},
 		"apply-constraints": cli.BoolFlag{
 			Name:  "apply-constraints",
-			Usage: "apply Constraints as if repos were building",
+			Usage: "apply all Constraints (including Architectures) as if repos were building",
+		},
+		"arch-filter": cli.BoolFlag{
+			Name:  "arch-filter",
+			Usage: "like apply-constraints, but only for Architectures",
 		},
 		"depth": cli.IntFlag{
 			Name:  "depth",
@@ -240,6 +244,7 @@ func main() {
 				commonFlags["all"],
 				commonFlags["uniq"],
 				commonFlags["apply-constraints"],
+				commonFlags["arch-filter"],
 				cli.BoolFlag{
 					Name:  "build-order",
 					Usage: "sort by the order repos would need to build (topsort)",
@@ -321,6 +326,7 @@ func main() {
 			Usage: `print the repos built FROM a given repo or repo:tag`,
 			Flags: []cli.Flag{
 				commonFlags["apply-constraints"],
+				commonFlags["arch-filter"],
 				commonFlags["depth"],
 				commonFlags["uniq"],
 			},
@@ -338,6 +344,7 @@ func main() {
 			Usage: `print the repos this repo or repo:tag is FROM`,
 			Flags: []cli.Flag{
 				commonFlags["apply-constraints"],
+				commonFlags["arch-filter"],
 				commonFlags["depth"],
 				commonFlags["uniq"],
 			},
@@ -375,6 +382,7 @@ func main() {
 				commonFlags["all"],
 				commonFlags["uniq"],
 				commonFlags["apply-constraints"],
+				commonFlags["arch-filter"],
 			},
 			Before: subcommandBeforeFactory("from"),
 			Action: cmdFrom,
