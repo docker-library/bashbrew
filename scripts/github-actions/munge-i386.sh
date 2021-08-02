@@ -4,7 +4,7 @@ set -Eeuo pipefail
 jq --arg dpkgSmokeTest '[ "$(dpkg --print-architecture)" = "amd64" ]' '
 	.matrix.include += [
 		.matrix.include[]
-		| select(.name | test(" (.+)") | not) # ignore any existing munged builds
+		| select(.name | test(" [(].+[)]") | not) # ignore any existing munged builds
 		| select(.os | startswith("windows-") | not)
 		| .name += " (i386)"
 		| .runs.pull = ([
