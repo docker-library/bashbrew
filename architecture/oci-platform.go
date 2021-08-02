@@ -1,5 +1,7 @@
 package architecture
 
+import "path"
+
 // https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md#image-index-property-descriptions
 // see "platform" (under "manifests")
 type OCIPlatform struct {
@@ -24,4 +26,13 @@ var SupportedArches = map[string]OCIPlatform{
 	"s390x":    {OS: "linux", Architecture: "s390x"},
 
 	"windows-amd64": {OS: "windows", Architecture: "amd64"},
+}
+
+// https://pkg.go.dev/github.com/containerd/containerd/platforms
+func (p OCIPlatform) String() string {
+	return path.Join(
+		p.OS,
+		p.Architecture,
+		p.Variant,
+	)
 }

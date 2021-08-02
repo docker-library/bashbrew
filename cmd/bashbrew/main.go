@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/docker-library/bashbrew/architecture"
 	"github.com/docker-library/bashbrew/manifest"
 )
 
@@ -22,6 +23,7 @@ var (
 	defaultCache   string
 
 	arch                 string
+	ociArch              architecture.OCIPlatform
 	namespace            string
 	constraints          []string
 	exclusiveConstraints bool
@@ -165,6 +167,11 @@ func main() {
 			namespace = c.GlobalString("namespace")
 			constraints = c.GlobalStringSlice("constraint")
 			exclusiveConstraints = c.GlobalBool("exclusive-constraints")
+
+			var ok bool
+			if ociArch, ok = architecture.SupportedArches[arch]; !ok {
+				return fmt.Errorf("invalid architecture: %q", arch)
+			}
 
 			archNamespaces = map[string]string{}
 			for _, archMapping := range c.GlobalStringSlice("arch-namespace") {

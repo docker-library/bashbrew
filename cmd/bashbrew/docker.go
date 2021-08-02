@@ -237,10 +237,16 @@ func (r Repo) dockerBuildUniqueBits(entry *manifest.Manifest2822Entry) ([]string
 	return uniqueBits, nil
 }
 
-func dockerBuild(tag string, file string, context io.Reader) error {
-	args := []string{"build", "-t", tag, "-f", file, "--rm", "--force-rm"}
+func dockerBuild(tag string, file string, context io.Reader, extraEnv []string) error {
+	args := []string{"build", "--tag", tag, "--file", file, "--rm", "--force-rm"}
 	args = append(args, "-")
 	cmd := exec.Command("docker", args...)
+	if extraEnv != nil {
+		cmd.Env = append(os.Environ(), extraEnv...)
+		if debugFlag {
+			fmt.Printf("$ export %q\n", extraEnv)
+		}
+	}
 	cmd.Stdin = context
 	if debugFlag {
 		cmd.Stdout = os.Stdout
