@@ -168,6 +168,11 @@ func main() {
 			constraints = c.GlobalStringSlice("constraint")
 			exclusiveConstraints = c.GlobalBool("exclusive-constraints")
 
+			if arch == "" {
+				// weird edge case... ("BASHBREW_ARCH=")
+				arch = manifest.DefaultArchitecture
+			}
+
 			var ok bool
 			if ociArch, ok = architecture.SupportedArches[arch]; !ok {
 				return fmt.Errorf("invalid architecture: %q", arch)
