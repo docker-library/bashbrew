@@ -15,6 +15,7 @@ func cmdFrom(c *cli.Context) error {
 
 	uniq := c.Bool("uniq")
 	applyConstraints := c.Bool("apply-constraints")
+	archFilter := c.Bool("arch-filter")
 
 	for _, repo := range repos {
 		r, err := fetch(repo)
@@ -26,9 +27,12 @@ func cmdFrom(c *cli.Context) error {
 			if applyConstraints && r.SkipConstraints(entry) {
 				continue
 			}
+			if archFilter && !entry.HasArchitecture(arch) {
+				continue
+			}
 
 			entryArches := []string{arch}
-			if !applyConstraints {
+			if !applyConstraints && !archFilter {
 				entryArches = entry.Architectures
 			}
 

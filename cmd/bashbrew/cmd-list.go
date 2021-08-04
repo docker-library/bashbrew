@@ -16,6 +16,7 @@ func cmdList(c *cli.Context) error {
 
 	uniq := c.Bool("uniq")
 	applyConstraints := c.Bool("apply-constraints")
+	archFilter := c.Bool("arch-filter")
 	onlyRepos := c.Bool("repos")
 
 	buildOrder := c.Bool("build-order")
@@ -55,6 +56,9 @@ func cmdList(c *cli.Context) error {
 
 		for _, entry := range entries {
 			if applyConstraints && r.SkipConstraints(entry) {
+				continue
+			}
+			if archFilter && !entry.HasArchitecture(arch) {
 				continue
 			}
 
