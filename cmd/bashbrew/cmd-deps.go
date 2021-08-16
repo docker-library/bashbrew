@@ -125,9 +125,7 @@ func cmdFamily(parents bool, c *cli.Context) error {
 				}
 			}
 		} else {
-			if err != nil {
-				return cli.NewMultiError(fmt.Errorf(`failed fetching repo %q`, repo), err)
-			}
+			return cli.NewMultiError(fmt.Errorf(`failed fetching repo %q`, repo), err)
 		}
 
 		for _, tag := range tagsToConsider {
