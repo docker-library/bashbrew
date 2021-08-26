@@ -158,22 +158,22 @@ strategy="$(
 					"git clone --depth 1 https://github.com/docker-library/official-images.git -b master ~/oi",
 					"# create a dummy empty image/layer so we can --filter since= later to get a meaningful image list",
 					"{ echo FROM " + (
-						if (.os | startswith("windows-")) then
+						if .os | startswith("windows-") then
 							"mcr.microsoft.com/windows/servercore:ltsc" + (.os | ltrimstr("windows-"))
 						else
 							"busybox:latest"
 						end
 					) + "; echo RUN :; } | docker build --no-cache --tag image-list-marker -",
 					(
-						if .os | startswith("windows-") | not then
+						if (env.BASHBREW_GENERATE_SKIP_PGP_PROXY) or (.os | startswith("windows-")) then
+							empty
+						else
 							(
 								"# PGP Happy Eyeballs",
 								"git clone --depth 1 https://github.com/tianon/pgp-happy-eyeballs.git ~/phe",
 								"~/phe/hack-my-builds.sh",
 								"rm -rf ~/phe"
 							)
-						else
-							empty
 						end
 					)
 				] | join("\n")),
