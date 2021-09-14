@@ -102,13 +102,33 @@ func sortRepoObjects(rs []*Repo, applyConstraints bool) ([]*Repo, error) {
 			if applyConstraints && r.SkipConstraints(entry) {
 				continue
 			}
-			if !entry.HasArchitecture(arch) {
+			/*
+			// TODO need archFilter here :(
+			if archFilter && !entry.HasArchitecture(arch) {
 				continue
 			}
+			*/
 
-			froms, err := r.DockerFroms(entry)
-			if err != nil {
-				return nil, err
+			entryArches := []string{arch}
+			if !applyConstraints { // TODO && !archFilter
+				entryArches = entry.Architectures
+			}
+
+			froms := []string{}
+			for _, entryArch := range entryArches {
+				archFroms, err := r.ArchDockerFroms(entryArch, entry)
+				if err != nil {
+					return nil, err
+				}
+			ArchFroms:
+				for _, archFrom := range archFroms {
+					for _, from := range froms {
+						if from == archFrom {
+							continue ArchFroms
+						}
+					}
+					froms = append(froms, archFrom)
+				}
 			}
 
 			for _, from := range froms {
