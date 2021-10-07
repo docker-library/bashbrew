@@ -1,4 +1,4 @@
-FROM golang:1.16-buster AS build
+FROM golang:1.16-bullseye AS build
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
