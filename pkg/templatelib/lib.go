@@ -1,12 +1,13 @@
 package templatelib
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"reflect"
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 )
 
 func swapStringsFuncBoolArgsOrder(a func(string, string) bool) func(string, string) bool {
@@ -68,55 +69,33 @@ func stringsModifierActionFactory(a func(string, string) string) func([]string, 
 	}
 }
 
-var FuncMap = template.FuncMap{
-	// {{- $isGitHub := hasPrefix "https://github.com/" $url -}}
-	// {{- $isHtml := hasSuffix ".html" $url -}}
-	"hasPrefix": swapStringsFuncBoolArgsOrder(strings.HasPrefix),
-	"hasSuffix": swapStringsFuncBoolArgsOrder(strings.HasSuffix),
+func FuncMap() template.FuncMap {
+	funcMap := sprig.TxtFuncMap()
 
-	// {{- $hugeIfTrue := .SomeValue | ternary "HUGE" "not so huge" -}}
-	// if .SomeValue is truthy, $hugeIfTrue will be "HUGE"
-	// (otherwise, "not so huge")
-	"ternary": func(truthy interface{}, falsey interface{}, val interface{}) interface{} {
-		if t, ok := template.IsTrue(val); !ok {
-			panic(fmt.Sprintf(`template.IsTrue(%+v) says things are NOT OK`, val))
-		} else if t {
-			return truthy
-		} else {
-			return falsey
+	// https://github.com/Masterminds/sprig/pull/276
+	funcMap["ternary"] = func(vt interface{}, vf interface{}, v interface{}) interface{} {
+		if truth, ok := template.IsTrue(v); !ok {
+			panic(fmt.Sprintf(`template.IsTrue(%+v) says things are NOT OK`, v))
+		} else if truth {
+			return vt
 		}
-	},
+		return vf
+	}
 
-	// First Tag: {{- .Tags | first -}}
-	// Last Tag:  {{- .Tags | last -}}
-	"first": thingsActionFactory("first", true, func(args []interface{}, arg interface{}) interface{} { return arg }),
-	"last":  thingsActionFactory("last", false, func(args []interface{}, arg interface{}) interface{} { return arg }),
+	// Everybody: {{- join ", " .Names -}}
+	// Concat: {{- join "/" "https://github.com" "jsmith" "some-repo" -}}
+	funcMap["join"] = stringsActionFactory("join", true, strings.Join)
+	// (this differs slightly from the Sprig "join" in that it accepts either a list of strings or multiple arguments - Sprig instead has an explicit "list" function which can create a list of strings *from* a list of arguments so that multiple-signature usability like this is not necessary)
 
 	// JSON data dump: {{ json . }}
 	// (especially nice for taking data and piping it to "jq")
 	// (ie "some-tool inspect --format '{{ json . }}' some-things | jq .")
-	"json": func(v interface{}) (string, error) {
-		j, err := json.Marshal(v)
-		return string(j), err
-	},
-
-	// Everybody: {{- join ", " .Names -}}
-	// Concat: {{- join "/" "https://github.com" "jsmith" "some-repo" -}}
-	"join": stringsActionFactory("join", true, strings.Join),
-
-	// {{- $mungedUrl := $url | replace "git://" "https://" | trimSuffixes ".git" -}}
-	// turns: git://github.com/jsmith/some-repo.git
-	// into: https://github.com/jsmith/some-repo
-	"trimPrefixes": stringsActionFactory("trimPrefixes", false, stringsModifierActionFactory(strings.TrimPrefix)),
-	"trimSuffixes": stringsActionFactory("trimSuffixes", false, stringsModifierActionFactory(strings.TrimSuffix)),
-	"replace": stringsActionFactory("replace", false, func(strs []string, str string) string {
-		return strings.NewReplacer(strs...).Replace(str)
-	}),
+	funcMap["json"] = funcMap["toJson"]
 
 	// {{- getenv "PATH" -}}
 	// {{- getenv "HOME" "no HOME set" -}}
 	// {{- getenv "HOME" "is set" "is NOT set (or is empty)" -}}
-	"getenv": thingsActionFactory("getenv", true, func(args []interface{}, arg interface{}) interface{} {
+	funcMap["getenv"] = thingsActionFactory("getenv", true, func(args []interface{}, arg interface{}) interface{} {
 		var (
 			val                  = os.Getenv(arg.(string))
 			setVal   interface{} = val
@@ -134,5 +113,13 @@ var FuncMap = template.FuncMap{
 		} else {
 			return unsetVal
 		}
-	}),
+	})
+
+	// {{- $mungedUrl := $url | replace "git://" "https://" | trimSuffixes ".git" -}}
+	// turns: git://github.com/jsmith/some-repo.git
+	// into: https://github.com/jsmith/some-repo
+	funcMap["trimPrefixes"] = stringsActionFactory("trimPrefixes", false, stringsModifierActionFactory(strings.TrimPrefix))
+	funcMap["trimSuffixes"] = stringsActionFactory("trimSuffixes", false, stringsModifierActionFactory(strings.TrimSuffix))
+
+	return funcMap
 }
