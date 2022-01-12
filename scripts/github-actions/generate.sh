@@ -66,8 +66,6 @@ for tag in $tags; do
 						"windows-2022"
 					elif (.constraints | contains(["windowsservercore-1809"])) or (.constraints | contains(["nanoserver-1809"])) then
 						"windows-2019"
-					elif .constraints | contains(["windowsservercore-ltsc2016"]) then
-						"windows-2016"
 					elif .constraints == [] or .constraints == ["!aufs"] then
 						"ubuntu-latest"
 					else
