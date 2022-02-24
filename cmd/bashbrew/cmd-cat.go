@@ -7,9 +7,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/urfave/cli"
+	"github.com/docker-library/bashbrew/architecture"
 	"github.com/docker-library/bashbrew/manifest"
 	"github.com/docker-library/bashbrew/pkg/templatelib"
+	"github.com/urfave/cli"
 )
 
 var DefaultCatFormat = `
@@ -54,6 +55,12 @@ func cmdCat(c *cli.Context) error {
 		},
 		"arch": func() string {
 			return arch
+		},
+		"ociPlatform": func(arch string) *architecture.OCIPlatform {
+			if ociArch, ok := architecture.SupportedArches[arch]; ok {
+				return &ociArch
+			}
+			return nil
 		},
 		"namespace": func() string {
 			return namespace
