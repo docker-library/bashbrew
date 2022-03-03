@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus" // this is used by containerd libraries, so we need to set the default log level for it
 	"github.com/urfave/cli"
 
 	"github.com/docker-library/bashbrew/architecture"
@@ -162,6 +163,11 @@ func main() {
 
 			debugFlag = c.GlobalBool("debug")
 			noSortFlag = c.GlobalBool("no-sort")
+
+			if !debugFlag {
+				// containerd uses logrus, but it defaults to "info" (which is a bit leaky where we use containerd)
+				logrus.SetLevel(logrus.WarnLevel)
+			}
 
 			arch = c.GlobalString("arch")
 			namespace = c.GlobalString("namespace")

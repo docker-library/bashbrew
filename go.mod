@@ -12,6 +12,7 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/opencontainers/image-spec v1.0.2
 	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli v1.22.5
 	github.com/xanzy/ssh-agent v0.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 // indirect
