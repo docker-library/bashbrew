@@ -150,7 +150,7 @@ func main() {
 			Name:   "git-password",
 			Value:  manifest.DefaultArchitecture,
 			EnvVar: flagEnvVars["git-password"],
-			Usage:  "passord or preferably token to access git repository when git repo is private",
+			Usage:  "password or preferably token to access git repository when git repo is private",
 		},
 	}
 
