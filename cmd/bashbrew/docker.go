@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/urfave/cli"
 	"github.com/docker-library/bashbrew/manifest"
+	"github.com/urfave/cli"
 )
 
 type dockerfileMetadata struct {
@@ -53,7 +53,7 @@ func (r Repo) dockerfileMetadata(entry *manifest.Manifest2822Entry) (*dockerfile
 var dockerfileMetadataCache = map[string]*dockerfileMetadata{}
 
 func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822Entry) (*dockerfileMetadata, error) {
-	commit, err := r.fetchGitRepo(arch, entry)
+	commit, err := r.fetchGitRepo(arch, entry, auth)
 	if err != nil {
 		return nil, cli.NewMultiError(fmt.Errorf("failed fetching Git repo for arch %q from entry %q", arch, entry.String()), err)
 	}

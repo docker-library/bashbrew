@@ -21,6 +21,7 @@ require (
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12 // indirect
 	google.golang.org/grpc v1.42.0 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 	pault.ag/go/debian v0.12.0
 	pault.ag/go/topsort v0.1.1
 )

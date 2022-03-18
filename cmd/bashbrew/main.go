@@ -8,6 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus" // this is used by containerd libraries, so we need to set the default log level for it
 	"github.com/urfave/cli"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 
 	"github.com/docker-library/bashbrew/architecture"
 	"github.com/docker-library/bashbrew/manifest"
@@ -28,6 +29,9 @@ var (
 	namespace            string
 	constraints          []string
 	exclusiveConstraints bool
+	gitUsername          string
+	gitPassword          string
+	auth                 http.AuthMethod
 
 	archNamespaces map[string]string
 
@@ -136,6 +140,18 @@ func main() {
 			EnvVar: flagEnvVars["cache"],
 			Usage:  "where the git wizardry is stashed",
 		},
+		cli.StringFlag{
+			Name:   "git-username",
+			Value:  manifest.DefaultArchitecture,
+			EnvVar: flagEnvVars["git-username"],
+			Usage:  "username to access git repository when git repo is private",
+		},
+		cli.StringFlag{
+			Name:   "git-password",
+			Value:  manifest.DefaultArchitecture,
+			EnvVar: flagEnvVars["git-password"],
+			Usage:  "passord or preferably token to access git repository when git repo is private",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -173,6 +189,15 @@ func main() {
 			namespace = c.GlobalString("namespace")
 			constraints = c.GlobalStringSlice("constraint")
 			exclusiveConstraints = c.GlobalBool("exclusive-constraints")
+			gitUsername = c.GlobalString("git-username")
+			gitPassword = c.GlobalString("git-password")
+
+			if gitUsername != "" && gitPassword != "" {
+				auth = &http.BasicAuth{
+					Username: gitUsername,
+					Password: gitPassword,
+				}
+			}
 
 			if arch == "" {
 				// weird edge case... ("BASHBREW_ARCH=")

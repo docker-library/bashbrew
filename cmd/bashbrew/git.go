@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
+
 	"github.com/urfave/cli"
 
 	"github.com/docker-library/bashbrew/manifest"
@@ -155,7 +157,7 @@ func gitNormalizeForTagUsage(text string) string {
 
 var gitRepoCache = map[string]string{}
 
-func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (string, error) {
+func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry, auth http.AuthMethod) (string, error) {
 	cacheKey := strings.Join([]string{
 		entry.ArchGitRepo(arch),
 		entry.ArchGitFetch(arch),
@@ -246,6 +248,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		err := gitRemote.Fetch(&goGit.FetchOptions{
 			RefSpecs: []goGitConfig.RefSpec{goGitConfig.RefSpec(fetchString)},
 			Tags:     goGit.NoTags,
+			Auth:     auth,
 
 			//Progress: os.Stdout,
 		})
