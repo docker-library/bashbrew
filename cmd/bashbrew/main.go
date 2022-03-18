@@ -142,13 +142,13 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "git-username",
-			Value:  manifest.DefaultArchitecture,
+			Value:  "",
 			EnvVar: flagEnvVars["git-username"],
 			Usage:  "username to access git repository when git repo is private",
 		},
 		cli.StringFlag{
 			Name:   "git-password",
-			Value:  manifest.DefaultArchitecture,
+			Value:  "",
 			EnvVar: flagEnvVars["git-password"],
 			Usage:  "password or preferably token to access git repository when git repo is private",
 		},
