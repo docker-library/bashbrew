@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20211112122917-428f8eabeeb3 // indirect
-	github.com/containerd/containerd v1.5.8
+	github.com/containerd/containerd v1.5.11
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
