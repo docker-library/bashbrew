@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/urfave/cli"
 	"github.com/docker-library/bashbrew/manifest"
+	"github.com/urfave/cli"
 )
 
 type dockerfileMetadata struct {
@@ -218,6 +218,11 @@ func (r Repo) dockerBuildUniqueBits(entry *manifest.Manifest2822Entry) ([]string
 		entry.ArchDirectory(arch),
 		entry.ArchFile(arch),
 	}
+	if builder := entry.ArchBuilder(arch); builder != "" {
+		// NOTE: preserve long-term unique id by only attaching builder if
+		// explicitly specified
+		uniqueBits = append(uniqueBits, entry.ArchBuilder(arch))
+	}
 	meta, err := r.dockerfileMetadata(entry)
 	if err != nil {
 		return nil, err
@@ -237,16 +242,57 @@ func (r Repo) dockerBuildUniqueBits(entry *manifest.Manifest2822Entry) ([]string
 	return uniqueBits, nil
 }
 
-func dockerBuild(tag string, file string, context io.Reader, extraEnv []string) error {
+func dockerBuild(tag string, file string, context io.Reader, platform string) error {
 	args := []string{"build", "--tag", tag, "--file", file, "--rm", "--force-rm"}
 	args = append(args, "-")
 	cmd := exec.Command("docker", args...)
-	if extraEnv != nil {
-		cmd.Env = append(os.Environ(), extraEnv...)
+	cmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=0")
+	if debugFlag {
+		fmt.Println("$ export DOCKER_BUILDKIT=0")
+	}
+	if platform != "" {
+		// ideally, we would set this via an explicit "--platform" flag on "docker build", but it's not supported without buildkit until 20.10+ and this is a trivial way to get Docker to do the right thing in both cases without explicitly trying to detect whether we're on 20.10+
+		// https://github.com/docker/cli/blob/v20.10.7/cli/command/image/build.go#L163
+		cmd.Env = append(cmd.Env, "DOCKER_DEFAULT_PLATFORM="+platform)
 		if debugFlag {
-			fmt.Printf("$ export %q\n", extraEnv)
+			fmt.Printf("$ export DOCKER_DEFAULT_PLATFORM=%q\n", platform)
 		}
 	}
+	cmd.Stdin = context
+	if debugFlag {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		fmt.Printf("$ docker %q\n", args)
+		return cmd.Run()
+	} else {
+		buf := &bytes.Buffer{}
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+		err := cmd.Run()
+		if err != nil {
+			err = cli.NewMultiError(err, fmt.Errorf(`docker %q output:%s`, args, "\n"+buf.String()))
+		}
+		return err
+	}
+}
+
+const dockerfileSyntax = "docker/dockerfile:1"
+
+func dockerBuildxBuild(tag string, file string, context io.Reader, platform string) error {
+	args := []string{
+		"buildx",
+		"build",
+		"--progress", "plain",
+		"--build-arg", "BUILDKIT_SYNTAX=" + dockerfileSyntax,
+		"--tag", tag,
+		"--file", file,
+	}
+	if platform != "" {
+		args = append(args, "--platform", platform)
+	}
+	args = append(args, "-")
+
+	cmd := exec.Command("docker", args...)
 	cmd.Stdin = context
 	if debugFlag {
 		cmd.Stdout = os.Stdout
