@@ -34,7 +34,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Go Test
         run: |
-          docker build --pull --file Dockerfile.test .
+          docker build --pull --file Dockerfile.test --tag test .
+          docker run --rm test cat coverage.out > coverage.out
+      - name: Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: coverage.out
   dockerfile:
     name: Test Dockerfile
     runs-on: ubuntu-latest
