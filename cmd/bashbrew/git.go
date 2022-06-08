@@ -209,13 +209,8 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		}
 		defer os.RemoveAll(tempRefDir)
 
-		tempRef := path.Join(refBase, filepath.Base(tempRefDir))
-		if entry.ArchGitFetch(arch) == manifest.DefaultLineBasedFetch {
-			// backwards compat (see manifest/line-based.go in go-dockerlibrary)
-			fetchStrings[0] += tempRef + "/*"
-		} else {
-			fetchStrings[0] += tempRef + "/temp"
-		}
+		tempRef := path.Join(refBase, filepath.Base(tempRefDir)) + "/temp"
+		fetchStrings[0] += tempRef
 
 		fetchStrings = append([]string{
 			// Git (and more recently, GitHub) support "git fetch"ing a specific commit directly!
@@ -223,7 +218,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 			// https://github.com/git/git/commit/f8edeaa05d8623a9f6dad408237496c51101aad8
 			// https://github.com/go-git/go-git/pull/58
 			// If that works, we want to prefer it (since it'll be much more efficient at getting us the commit we care about), so we prepend it to our list of "things to try fetching"
-			entryArchGitCommit + ":" + tempRef + "/temp",
+			entryArchGitCommit + ":" + tempRef,
 		}, fetchStrings...)
 	}
 
