@@ -581,6 +581,9 @@ func (decoder *decoderWrapper) Decode(entry *Manifest2822Entry) error {
 	}
 }
 
+// https://github.com/docker-library/bashbrew/issues/16
+var Parse = Parse2822
+
 func Parse2822(readerIn io.Reader) (*Manifest2822, error) {
 	reader := stripper.NewCommentStripper(readerIn)
 
