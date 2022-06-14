@@ -96,7 +96,14 @@ for tag in $tags; do
 						| join(" ")
 					),
 					history: ("docker history " + (.tags[0] | @sh)),
-					test: ("~/oi/test/run.sh " + (.tags[0] | @sh)),
+					test: (
+						[
+							"set -- " + (.tags[0] | @sh),
+							# https://github.com/docker-library/bashbrew/issues/46#issuecomment-1152567694 (allow local test config / tests)
+							"if [ -s ./.test/config.sh ]; then set -- --config ~/oi/test/config.sh --config ./.test/config.sh \"$@\"; fi",
+							"~/oi/test/run.sh \"$@\""
+						] | join("\n")
+					),
 				},
 			}
 		'
