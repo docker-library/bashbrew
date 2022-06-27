@@ -172,19 +172,7 @@ strategy="$(
 						else
 							"busybox:latest"
 						end
-					) + "; echo RUN :; } | docker build --no-cache --tag image-list-marker -",
-					(
-						if (env.BASHBREW_GENERATE_SKIP_PGP_PROXY) or (.os | startswith("windows-")) then
-							empty
-						else
-							(
-								"# PGP Happy Eyeballs",
-								"git clone --depth 1 https://github.com/tianon/pgp-happy-eyeballs.git ~/phe",
-								"~/phe/hack-my-builds.sh",
-								"rm -rf ~/phe"
-							)
-						end
-					)
+					) + "; echo RUN :; } | docker build --no-cache --tag image-list-marker -"
 				] | join("\n")),
 				pull: ([ .meta.froms[] | select(. != "scratch") | "docker pull " + @sh ] | join("\n")),
 				# build
