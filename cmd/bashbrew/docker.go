@@ -276,9 +276,14 @@ func dockerBuild(tag string, file string, context io.Reader, platform string) er
 	}
 }
 
-const dockerfileSyntax = "docker/dockerfile:1"
+const dockerfileSyntaxEnv = "BASHBREW_BUILDKIT_SYNTAX"
 
 func dockerBuildxBuild(tag string, file string, context io.Reader, platform string) error {
+	dockerfileSyntax, ok := os.LookupEnv(dockerfileSyntaxEnv)
+	if !ok {
+		return fmt.Errorf("missing %q", dockerfileSyntaxEnv)
+	}
+
 	args := []string{
 		"buildx",
 		"build",
