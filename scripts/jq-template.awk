@@ -3,18 +3,13 @@
 # see https://github.com/docker-library/php or https://github.com/docker-library/golang for examples of usage ("apply-templates.sh")
 
 # escape an arbitrary string for passing back to jq as program input
-function jq_escape(str,          # parameters
-                   prog, e, out) # locals
-{
-	prog = "jq --raw-input --slurp ."
-	printf "%s", str |& prog
-	close(prog, "to")
-	prog |& getline out
-	e = close(prog)
-	if (e != 0) {
-		exit(e)
-	}
-	return out
+function jq_escape(str) {
+	gsub(/\\/, "\\\\", str)
+	gsub(/\n/, "\\n", str)
+	gsub(/\r/, "\\r", str)
+	gsub(/\t/, "\\t", str)
+	gsub(/"/, "\\\"", str)
+	return "\"" str "\""
 }
 
 # return the number of times needle appears in haystack
