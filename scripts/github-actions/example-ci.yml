@@ -44,5 +44,12 @@ jobs:
         run: ${{ matrix.runs.history }}
       - name: Test ${{ matrix.name }}
         run: ${{ matrix.runs.test }}
-      - name: '"docker images"'
+      - name: 'List all built docker images'
         run: ${{ matrix.runs.images }}
+      - name: 'Scan image'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ matrix.runs.getfirsttag }}'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'scan-results.sarif'
