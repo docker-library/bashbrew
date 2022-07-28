@@ -46,10 +46,11 @@ jobs:
         run: ${{ matrix.runs.test }}
       - name: 'List all built docker images'
         run: ${{ matrix.runs.images }}
+      # scan image by its first applied tag
       - name: 'Scan image'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ matrix.runs.getfirsttag }}'
+          image-ref: '${{ matrix.meta.entries[0].tags[0] }}'
           severity: 'CRITICAL,HIGH'
           format: 'sarif'
           output: 'scan-results.sarif'

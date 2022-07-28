@@ -104,7 +104,6 @@ for tag in $tags; do
 							"~/oi/test/run.sh \"$@\""
 						] | join("\n")
 					),
-					getfirsttag: ((.tags[0] | @sh))
 				},
 			}
 		'
