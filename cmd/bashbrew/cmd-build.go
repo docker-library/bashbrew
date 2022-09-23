@@ -95,16 +95,27 @@ func cmdBuild(c *cli.Context) error {
 
 					// TODO use "meta.StageNames" to do "docker build --target" so we can tag intermediate stages too for cache (streaming "git archive" directly to "docker build" makes that a little hard to accomplish without re-streaming)
 
-					var extraEnv []string = nil
-					if fromScratch {
-						// https://github.com/docker/cli/blob/v20.10.7/cli/command/image/build.go#L163
-						extraEnv = []string{"DOCKER_DEFAULT_PLATFORM=" + ociArch.String()}
-						// ideally, we would set this via an explicit "--platform" flag on "docker build", but it's not supported without buildkit until 20.10+ and this is a trivial way to get Docker to do the right thing in both cases without explicitly trying to detect whether we're on 20.10+
-					}
-
-					err = dockerBuild(cacheTag, entry.ArchFile(arch), archive, extraEnv)
-					if err != nil {
-						return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+					switch builder := entry.ArchBuilder(arch); builder {
+					case "classic", "":
+						var platform string
+						if fromScratch {
+							platform = ociArch.String()
+						}
+						err = dockerBuild(cacheTag, entry.ArchFile(arch), archive, platform)
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+						}
+					case "buildkit":
+						var platform string
+						if fromScratch {
+							platform = ociArch.String()
+						}
+						err = dockerBuildxBuild(cacheTag, entry.ArchFile(arch), archive, platform)
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+						}
+					default:
+						return cli.NewMultiError(fmt.Errorf(`unknown builder %q`, builder))
 					}
 					archive.Close() // be sure this happens sooner rather than later (defer might take a while, and we want to reap zombies more aggressively)
 				}
