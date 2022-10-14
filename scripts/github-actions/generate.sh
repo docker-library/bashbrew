@@ -55,6 +55,7 @@ for tag in $tags; do
 				"tags": {{- json ($.Tags namespace false $e) -}},
 				"directory": {{- json ($e.ArchDirectory $arch) -}},
 				"file": {{- json ($e.ArchFile $arch) -}},
+				"builder": {{- json ($e.ArchBuilder $arch) -}}
 				"constraints": {{- json $e.Constraints -}},
 				"froms": {{- json ($.ArchDockerFroms $arch $e) -}}
 			{{- "}" -}}
@@ -77,7 +78,14 @@ for tag in $tags; do
 				runs: {
 					build: (
 						[
-							"docker build"
+							# https://github.com/docker-library/bashbrew/pull/43
+							if .builder == "classic" or .builder == "" then
+								"DOCKER_BUILDKIT=0 docker build"
+							elif .builder == "buildkit" then
+								"docker buildx build --progress plain --build-arg BUILDKIT_SYNTAX=\"$BASHBREW_BUILDKIT_SYNTAX\"
+							else
+								"echo >&2 " + ("error: unknown/unsupported builder: " + .builder | @sh) + "\nexit 1\n#"
+							end
 						]
 						+ (
 							.tags
@@ -165,6 +173,10 @@ strategy="$(
 						end
 					),
 					"git clone --depth 1 https://github.com/docker-library/official-images.git -b master ~/oi",
+
+					# https://github.com/docker-library/bashbrew/pull/43
+					"echo BASHBREW_BUILDKIT_SYNTAX=\"$(< ~/oi/.bashbrew-buildkit-syntax)\" >> \"$GITHUB_ENV\"",
+
 					"# create a dummy empty image/layer so we can --filter since= later to get a meaningful image list",
 					"{ echo FROM " + (
 						if .os | startswith("windows-") then
