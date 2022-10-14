@@ -55,7 +55,7 @@ for tag in $tags; do
 				"tags": {{- json ($.Tags namespace false $e) -}},
 				"directory": {{- json ($e.ArchDirectory $arch) -}},
 				"file": {{- json ($e.ArchFile $arch) -}},
-				"builder": {{- json ($e.ArchBuilder $arch) -}}
+				"builder": {{- json ($e.ArchBuilder $arch) -}},
 				"constraints": {{- json $e.Constraints -}},
 				"froms": {{- json ($.ArchDockerFroms $arch $e) -}}
 			{{- "}" -}}
@@ -82,7 +82,7 @@ for tag in $tags; do
 							if .builder == "classic" or .builder == "" then
 								"DOCKER_BUILDKIT=0 docker build"
 							elif .builder == "buildkit" then
-								"docker buildx build --progress plain --build-arg BUILDKIT_SYNTAX=\"$BASHBREW_BUILDKIT_SYNTAX\"
+								"docker buildx build --progress plain --build-arg BUILDKIT_SYNTAX=\"$BASHBREW_BUILDKIT_SYNTAX\""
 							else
 								"echo >&2 " + ("error: unknown/unsupported builder: " + .builder | @sh) + "\nexit 1\n#"
 							end
