@@ -239,6 +239,11 @@ func main() {
 			Name:  "target-namespace",
 			Usage: `target namespace to act into ("docker tag namespace/repo:tag target-namespace/repo:tag", "docker push target-namespace/repo:tag")`,
 		},
+
+		"json": cli.BoolFlag{
+			Name:  "json",
+			Usage: "output machine-readable JSON instead of human-readable text",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -394,6 +399,22 @@ func main() {
 			Action: cmdFrom,
 
 			Category: "plumbing",
+		},
+		{
+			Name:  "remote",
+			Usage: "query registries for bashbrew-related data",
+			Before: subcommandBeforeFactory("remote"),
+			Category: "plumbing",
+			Subcommands: []cli.Command{
+				{
+					Name:  "arches",
+					Usage: "returns a list of bashbrew architectures and content descriptors for the specified image(s)",
+					Flags: []cli.Flag{
+						commonFlags["json"],
+					},
+					Action: cmdRemoteArches,
+				},
+			},
 		},
 	}
 
