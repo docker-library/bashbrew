@@ -40,6 +40,8 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: coverage.out
+          fail_ci_if_error: true
+          verbose: true
   dockerfile:
     name: Test Dockerfile
     runs-on: ubuntu-latest
