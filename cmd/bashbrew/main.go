@@ -337,7 +337,7 @@ func main() {
 				commonFlags["uniq"],
 			},
 			Before: subcommandBeforeFactory("children"),
-			Action: cmdOffspring,
+			Action: cmdChildren,
 
 			Category: "plumbing",
 		},
