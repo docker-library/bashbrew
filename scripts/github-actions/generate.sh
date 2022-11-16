@@ -117,12 +117,13 @@ for tag in $tags; do
 		'
 	)"
 
-	if parent="$(bashbrew parents "$bashbrewImage" | grep "^${tag%%:*}:")" && [ -n "$parent" ]; then
+	if parent="$(bashbrew parents --depth=1 "$bashbrewImage" | grep "^${tag%%:*}:")" && [ -n "$parent" ]; then
 		if [ "$(wc -l <<<"$parent")" -ne 1 ]; then
 			echo >&2 "error: '$tag' has multiple parents in the same repository and this script can't handle that yet!"
 			echo >&2 "$parent"
 			exit 1
 		fi
+		parent="$(bashbrew parents "$bashbrewImage" | grep "^${tag%%:*}:" | tail -1)" # get the "ultimate" this-repo parent
 		parentBashbrewImage="${parent##*/}" # account for BASHBREW_NAMESPACE being set
 		parent="$(bashbrew list --uniq "$parentBashbrewImage")" # normalize
 		parentMeta="${metas["$parent"]}"
