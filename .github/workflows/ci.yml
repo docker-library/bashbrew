@@ -40,11 +40,17 @@ jobs:
           docker build --pull --file Dockerfile.test --tag test .
           docker run --rm test cat coverage.out > coverage.out
       - name: Codecov
-        uses: codecov/codecov-action@v3
+        # https://github.com/marketplace/actions/retry-action
+        uses: Wandalen/wretry.action@v1.0.36
+        # https://community.codecov.com/t/upload-issues-unable-to-locate-build-via-github-actions-api/3954
         with:
-          files: coverage.out
-          fail_ci_if_error: true
-          verbose: true
+          action: codecov/codecov-action@v3
+          with: |
+            files: coverage.out
+            fail_ci_if_error: true
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 30000 # in ms
   dockerfile:
     name: Test Dockerfile
     runs-on: ubuntu-latest
