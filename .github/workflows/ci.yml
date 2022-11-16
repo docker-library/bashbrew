@@ -15,26 +15,26 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '>=1.18'
-      - name: Build
-        run: |
-          ./bashbrew.sh --version > /dev/null
-          bin/bashbrew --version
+      - uses: actions/checkout@v3
+      - uses: ./ # test our "action.yml" 👀
       - name: Smoke Test
         run: |
           image='https://github.com/docker-library/official-images/raw/master/library/hello-world'
-          bin/bashbrew list "$image"
-          bin/bashbrew list --uniq "$image"
-          bin/bashbrew cat "$image"
-          bin/bashbrew from --uniq "$image"
+          bashbrew list "$image"
+          bashbrew list --uniq "$image"
+          bashbrew cat "$image"
+          bashbrew from --uniq "$image"
+
+          "$BASHBREW_SCRIPTS/bashbrew-host-arch.sh" # should print "amd64"
+
+          arm32v7="$("$BASHBREW_SCRIPTS/bashbrew-arch-to-goenv.sh" arm32v7)"
+          eval "$arm32v7"
+          test "$GOARM" = '7'
   go-test:
     name: Go Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Go Test
         run: |
           docker build --pull --file Dockerfile.test --tag test .
@@ -49,7 +49,7 @@ jobs:
     name: Test Dockerfile
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build Dockerfile
         run: |
           docker build --pull .
@@ -57,7 +57,7 @@ jobs:
     name: Test Dockerfile.release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build Dockerfile.release
         run: |
           docker build --pull --file Dockerfile.release .
