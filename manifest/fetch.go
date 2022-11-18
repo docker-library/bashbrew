@@ -68,7 +68,7 @@ func Fetch(library, repo string) (string, string, *Manifest2822, error) {
 
 	// try file paths
 	filePaths := []string{}
-	if filepath.IsAbs(repo) || strings.IndexRune(repo, filepath.Separator) >= 0 || strings.IndexRune(repo, '/') >= 0 {
+	if filepath.IsAbs(repo) || strings.ContainsRune(repo, filepath.Separator) || strings.ContainsRune(repo, '/') {
 		filePaths = append(filePaths, repo)
 	}
 	if !filepath.IsAbs(repo) {
