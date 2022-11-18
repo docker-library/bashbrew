@@ -39,6 +39,7 @@ func cmdPush(c *cli.Context) error {
 			}
 
 			// we can't use "r.Tags()" here because it will include SharedTags, which we never want to push directly (see "cmd-put-shared.go")
+		TagsLoop:
 			for i, tag := range entry.Tags {
 				if uniq && i > 0 {
 					break
@@ -47,10 +48,12 @@ func cmdPush(c *cli.Context) error {
 
 				if !force {
 					localImageId, _ := dockerInspect("{{.Id}}", tag)
-					registryImageId := fetchRegistryImageId(tag)
-					if registryImageId != "" && localImageId == registryImageId {
-						fmt.Fprintf(os.Stderr, "skipping %s (remote image matches local)\n", tag)
-						continue
+					registryImageIds := fetchRegistryImageIds(tag)
+					for _, registryImageId := range registryImageIds {
+						if localImageId == registryImageId {
+							fmt.Fprintf(os.Stderr, "skipping %s (remote image matches local)\n", tag)
+							continue TagsLoop
+						}
 					}
 				}
 				fmt.Printf("Pushing %s\n", tag)
