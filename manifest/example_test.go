@@ -59,6 +59,8 @@ GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 Directory: 1.5
 File: Dockerfile.alpine
 s390x-File: Dockerfile.alpine.s390x.bad-boy
+Builder: buildkit
+GitFetch: refs/heads/having-a-good-time
 
 SharedTags: raspbian
 GitCommit: deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
@@ -105,9 +107,11 @@ s390x-File: Dockerfile
 	// s390x-GitCommit: b6c460e7cd79b595267870a98013ec3078b490df
 	//
 	// Tags: 1.5-alpine
+	// GitFetch: refs/heads/having-a-good-time
 	// GitCommit: d7e2a8d90a9b8f5dfd5bcd428e0c33b68c40cc19
 	// Directory: 1.5
 	// File: Dockerfile.alpine
+	// Builder: buildkit
 	// s390x-File: Dockerfile.alpine.s390x.bad-boy
 	//
 	// Tags: raspbian-s390x
