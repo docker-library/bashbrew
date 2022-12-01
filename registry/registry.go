@@ -166,18 +166,18 @@ func (obj ResolvedObject) Manifest(ctx context.Context) (*ocispec.Manifest, erro
 
 // ConfigBlob assumes the given object is a "config" blob (see [ResolvedObject.At]) and fetches/returns the parsed config object
 func (obj ResolvedObject) ConfigBlob(ctx context.Context) (*ocispec.Image, error) {
-	if obj.Desc.MediaType != "application/vnd.oci.image.config.v1+json" && obj.Desc.MediaType != "application/vnd.docker.container.image.v1+json" {
+	if !images.IsConfigType(obj.Desc.MediaType) {
 		return nil, fmt.Errorf("unknown media type: %q", obj.Desc.MediaType)
 	}
 	return get[ocispec.Image](ctx, obj)
 }
 
 func (obj ResolvedObject) IsImageManifest() bool {
-	return obj.Desc.MediaType == ocispec.MediaTypeImageManifest || obj.Desc.MediaType == images.MediaTypeDockerSchema2Manifest
+	return images.IsManifestType(obj.Desc.MediaType)
 }
 
 func (obj ResolvedObject) IsImageIndex() bool {
-	return obj.Desc.MediaType == ocispec.MediaTypeImageIndex || obj.Desc.MediaType == images.MediaTypeDockerSchema2ManifestList
+	return images.IsIndexType(obj.Desc.MediaType)
 }
 
 // Resolve returns an object which can be used to query a registry for manifest objects or certain blobs with type checking helpers
