@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/docker-library/bashbrew/manifest"
 	"github.com/docker-library/bashbrew/pkg/execpipe"
+	"github.com/docker-library/bashbrew/pkg/gitfs"
 
 	goGit "github.com/go-git/go-git/v5"
 	goGitConfig "github.com/go-git/go-git/v5/config"
@@ -92,6 +94,13 @@ func getGitCommit(commit string) (string, error) {
 		return "", err
 	}
 	return h.String(), nil
+}
+
+func gitCommitFS(commit string) (fs.FS, error) {
+	if err := ensureGitInit(); err != nil {
+		return nil, err
+	}
+	return gitfs.CommitHash(gitRepo, commit)
 }
 
 func gitStream(args ...string) (io.ReadCloser, error) {

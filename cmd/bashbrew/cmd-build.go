@@ -76,6 +76,8 @@ func cmdBuild(c *cli.Context) error {
 			if err != nil {
 				return cli.NewMultiError(fmt.Errorf(`failed calculating "cache hash" for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 			}
+			imageTags := r.Tags(namespace, uniq, entry)
+			tags := append([]string{cacheTag}, imageTags...)
 
 			// check whether we've already built this artifact
 			_, err = dockerInspect("{{.Id}}", cacheTag)
@@ -87,50 +89,49 @@ func cmdBuild(c *cli.Context) error {
 						return cli.NewMultiError(fmt.Errorf(`failed fetching git repo for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 					}
 
-					archive, err := gitArchive(commit, entry.ArchDirectory(arch))
-					if err != nil {
-						return cli.NewMultiError(fmt.Errorf(`failed generating git archive for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
-					}
-					defer archive.Close()
-
-					// TODO use "meta.StageNames" to do "docker build --target" so we can tag intermediate stages too for cache (streaming "git archive" directly to "docker build" makes that a little hard to accomplish without re-streaming)
-
 					switch builder := entry.ArchBuilder(arch); builder {
-					case "classic", "":
+					case "buildkit", "classic", "":
 						var platform string
 						if fromScratch {
 							platform = ociArch.String()
 						}
-						err = dockerBuild(cacheTag, entry.ArchFile(arch), archive, platform)
+
+						archive, err := gitArchive(commit, entry.ArchDirectory(arch))
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed generating git archive for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+						}
+						defer archive.Close()
+
+						if builder == "buildkit" {
+							err = dockerBuildxBuild(tags, entry.ArchFile(arch), archive, platform)
+						} else {
+							// TODO use "meta.StageNames" to do "docker build --target" so we can tag intermediate stages too for cache (streaming "git archive" directly to "docker build" makes that a little hard to accomplish without re-streaming)
+							err = dockerBuild(tags, entry.ArchFile(arch), archive, platform)
+						}
 						if err != nil {
 							return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 						}
-					case "buildkit":
-						var platform string
-						if fromScratch {
-							platform = ociArch.String()
-						}
-						err = dockerBuildxBuild(cacheTag, entry.ArchFile(arch), archive, platform)
+
+						archive.Close() // be sure this happens sooner rather than later (defer might take a while, and we want to reap zombies more aggressively)
+
+					case "oci-import":
+						err := ociImportBuild(tags, commit, entry.ArchDirectory(arch), entry.ArchFile(arch))
 						if err != nil {
-							return cli.NewMultiError(fmt.Errorf(`failed building %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+							return cli.NewMultiError(fmt.Errorf(`failed oci-import build of %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 						}
+
+						fmt.Printf("Importing %s into Docker\n", r.EntryIdentifier(entry))
+						err = ociImportDockerLoad(imageTags)
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed oci-import into Docker of %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+						}
+
 					default:
 						return cli.NewMultiError(fmt.Errorf(`unknown builder %q`, builder))
 					}
-					archive.Close() // be sure this happens sooner rather than later (defer might take a while, and we want to reap zombies more aggressively)
 				}
 			} else {
 				fmt.Printf("Using %s (%s)\n", cacheTag, r.EntryIdentifier(entry))
-			}
-
-			for _, tag := range r.Tags(namespace, uniq, entry) {
-				fmt.Printf("Tagging %s\n", tag)
-				if !dryRun {
-					err := dockerTag(cacheTag, tag)
-					if err != nil {
-						return cli.NewMultiError(fmt.Errorf(`failed tagging %q as %q`, cacheTag, tag), err)
-					}
-				}
 			}
 		}
 	}

@@ -53,6 +53,14 @@ func (r Repo) dockerfileMetadata(entry *manifest.Manifest2822Entry) (*dockerfile
 var dockerfileMetadataCache = map[string]*dockerfileMetadata{}
 
 func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822Entry) (*dockerfileMetadata, error) {
+	if builder := entry.ArchBuilder(arch); builder == "oci-import" {
+		return &dockerfileMetadata{
+			Froms: []string{
+				"scratch",
+			},
+		}, nil
+	}
+
 	commit, err := r.fetchGitRepo(arch, entry)
 	if err != nil {
 		return nil, cli.NewMultiError(fmt.Errorf("failed fetching Git repo for arch %q from entry %q", arch, entry.String()), err)
@@ -242,9 +250,13 @@ func (r Repo) dockerBuildUniqueBits(entry *manifest.Manifest2822Entry) ([]string
 	return uniqueBits, nil
 }
 
-func dockerBuild(tag string, file string, context io.Reader, platform string) error {
-	args := []string{"build", "--tag", tag, "--file", file, "--rm", "--force-rm"}
-	args = append(args, "-")
+func dockerBuild(tags []string, file string, context io.Reader, platform string) error {
+	args := []string{"build"}
+	for _, tag := range tags {
+		args = append(args, "--tag", tag)
+	}
+	args = append(args, "--file", file, "--rm", "--force-rm", "-")
+
 	cmd := exec.Command("docker", args...)
 	cmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=0")
 	if debugFlag {
@@ -278,7 +290,7 @@ func dockerBuild(tag string, file string, context io.Reader, platform string) er
 
 const dockerfileSyntaxEnv = "BASHBREW_BUILDKIT_SYNTAX"
 
-func dockerBuildxBuild(tag string, file string, context io.Reader, platform string) error {
+func dockerBuildxBuild(tags []string, file string, context io.Reader, platform string) error {
 	dockerfileSyntax, ok := os.LookupEnv(dockerfileSyntaxEnv)
 	if !ok {
 		return fmt.Errorf("missing %q", dockerfileSyntaxEnv)
@@ -289,13 +301,14 @@ func dockerBuildxBuild(tag string, file string, context io.Reader, platform stri
 		"build",
 		"--progress", "plain",
 		"--build-arg", "BUILDKIT_SYNTAX=" + dockerfileSyntax,
-		"--tag", tag,
-		"--file", file,
 	}
 	if platform != "" {
 		args = append(args, "--platform", platform)
 	}
-	args = append(args, "-")
+	for _, tag := range tags {
+		args = append(args, "--tag", tag)
+	}
+	args = append(args, "--file", file, "-")
 
 	cmd := exec.Command("docker", args...)
 	cmd.Stdin = context

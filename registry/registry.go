@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
-	"os"
 	"unicode"
 
 	// thanks, go-digest...
@@ -18,7 +16,6 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes"
-	dockerremote "github.com/containerd/containerd/remotes/docker"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -189,10 +186,18 @@ func Resolve(ctx context.Context, image string) (*ResolvedObject, error) {
 		err error
 	)
 
-	obj.ImageRef, obj.resolver, err = resolverHelper(obj.ImageRef)
+	ref, err := docker.ParseAnyReference(obj.ImageRef)
 	if err != nil {
 		return nil, err
 	}
+	if namedRef, ok := ref.(docker.Named); ok {
+		// add ":latest" if necessary
+		namedRef = docker.TagNameOnly(namedRef)
+		ref = namedRef
+	}
+	obj.ImageRef = ref.String()
+
+	obj.resolver = NewDockerAuthResolver()
 
 	obj.ImageRef, obj.Desc, err = obj.resolver.Resolve(ctx, obj.ImageRef)
 	if err != nil {
@@ -205,33 +210,4 @@ func Resolve(ctx context.Context, image string) (*ResolvedObject, error) {
 	}
 
 	return &obj, nil
-}
-
-func resolverHelper(image string) (string, remotes.Resolver, error) {
-	ref, err := docker.ParseAnyReference(image)
-	if err != nil {
-		return "", nil, err
-	}
-	if namedRef, ok := ref.(docker.Named); ok {
-		// add ":latest" if necessary
-		namedRef = docker.TagNameOnly(namedRef)
-		ref = namedRef
-	}
-	return ref.String(), dockerremote.NewResolver(dockerremote.ResolverOptions{
-		// TODO port this to "Hosts:" (especially so we can return Scheme correctly) but requires reimplementing some of https://github.com/containerd/containerd/blob/v1.6.9/remotes/docker/resolver.go#L161-L184 😞
-		Host: func(host string) (string, error) {
-			if host == "docker.io" {
-				if publicProxy := os.Getenv("DOCKERHUB_PUBLIC_PROXY"); publicProxy != "" {
-					if publicProxyURL, err := url.Parse(publicProxy); err == nil {
-						// TODO Scheme (also not sure if "host:port" will be satisfactory to containerd here, but 🤷)
-						return publicProxyURL.Host, nil
-					} else {
-						return "", err
-					}
-				}
-				return "registry-1.docker.io", nil // https://github.com/containerd/containerd/blob/1c90a442489720eec95342e1789ee8a5e1b9536f/remotes/docker/registry.go#L193
-			}
-			return host, nil
-		},
-	}), nil
 }
