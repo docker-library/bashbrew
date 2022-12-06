@@ -1,9 +1,11 @@
 package gitfs
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"path"
+	"strings"
 	"time"
 
 	goGit "github.com/go-git/go-git/v5"
@@ -31,6 +33,38 @@ type gitFS struct {
 	commit *goGitPlumbingObject.Commit
 }
 
+// apparently symlinks in "io/fs" are still a big TODO (https://github.com/golang/go/issues/49580, https://github.com/golang/go/issues/45470, etc related issues); all the existing interfaces assume symlinks don't exist
+//
+// if the File object passed to this function represents a symlink, this returns the (resolved) path that should be looked up instead; only relative symlinks are supported (and attempts to escape the repository with too many "../" *should* result in an error -- this is a convenience/sanity check, not a security boundary; subset of https://pkg.go.dev/io/fs#ValidPath)
+//
+// otherwise, it will return the empty string and nil
+func resolveSymlink(f *goGitPlumbingObject.File) (target string, err error) {
+	if f.Mode != goGitPlumbingFileMode.Symlink {
+		return "", nil
+	}
+
+	target, err = f.Contents()
+	if err != nil {
+		return "", err
+	}
+
+	if target == "" {
+		return "", fmt.Errorf("unexpected: empty symlink %q", f.Name)
+	}
+
+	if path.IsAbs(target) {
+		return "", fmt.Errorf("unsupported: %q is an absolute symlink (%q)", f.Name, target)
+	}
+
+	target = path.Join(path.Dir(f.Name), target)
+
+	if strings.HasPrefix(target, "../") {
+		return "", fmt.Errorf("unsupported: %q is a relative symlink outside the tree (%q)", f.Name, target)
+	}
+
+	return target, nil
+}
+
 // https://pkg.go.dev/io/fs#FS
 func (fs gitFS) Open(name string) (fs.File, error) {
 	f, err := fs.commit.File(name)
@@ -38,10 +72,18 @@ func (fs gitFS) Open(name string) (fs.File, error) {
 		// TODO if it's file-not-found, we need to check whether it's a directory
 		return nil, err
 	}
+
+	if target, err := resolveSymlink(f); err != nil {
+		return nil, err
+	} else if target != "" {
+		return fs.Open(target)
+	}
+
 	reader, err := f.Reader()
 	if err != nil {
 		return nil, err
 	}
+
 	return gitFSFile{
 		stat: gitFSFileInfo{
 			file: f,
@@ -56,6 +98,13 @@ func (fs gitFS) Stat(name string) (fs.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if target, err := resolveSymlink(f); err != nil {
+		return nil, err
+	} else if target != "" {
+		return fs.Stat(target)
+	}
+
 	return gitFSFileInfo{
 		file: f,
 	}, nil
@@ -98,13 +147,13 @@ func (fi gitFSFileInfo) Mode() fs.FileMode {
 	case goGitPlumbingFileMode.Regular:
 		return 0644
 	case goGitPlumbingFileMode.Symlink:
-		return 0644 & fs.ModeSymlink
+		return 0644 | fs.ModeSymlink
 	case goGitPlumbingFileMode.Executable:
 		return 0755
 	case goGitPlumbingFileMode.Dir:
-		return 0755 & fs.ModeDir
+		return 0755 | fs.ModeDir
 	}
-	return 0 & fs.ModeIrregular // TODO what to do for files whose types we don't support? 😬
+	return 0 | fs.ModeIrregular // TODO what to do for files whose types we don't support? 😬
 }
 
 // modification time
