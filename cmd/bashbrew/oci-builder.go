@@ -62,13 +62,18 @@ func readContentJSON(ctx context.Context, cs content.Provider, desc imagespec.De
 }
 
 // given a containerd content store, an io/fs reference to an "OCI image layout", and an OCI descriptor, import the given blob into the content store (with appropriate validation)
-func importOCIBlob(ctx context.Context, cs content.Ingester, fs iofs.FS, descriptor imagespec.Descriptor) error {
+func importOCIBlob(ctx context.Context, cs content.Store, fs iofs.FS, descriptor imagespec.Descriptor) error {
 	// https://github.com/opencontainers/image-spec/blob/v1.0.2/image-layout.md#blobs
 	blob, err := fs.Open(path.Join("blobs", string(descriptor.Digest.Algorithm()), descriptor.Digest.Encoded())) // "blobs/sha256/deadbeefdeadbeefdeadbeef..."
 	if err != nil {
 		return err
 	}
 	defer blob.Close()
+
+	ingestRef := string(descriptor.Digest)
+
+	// explicitly "abort" the ref we're about to use in case there's a partial or failed ingest already (which content.WriteBlob will then quietly reuse, over and over)
+	_ = cs.Abort(ctx, ingestRef)
 
 	// WriteBlob does *not* limit reads to the provided size, so let's wrap ourselves in a LimitedReader to prevent reading (much) more than we intend
 	r := io.LimitReader(
@@ -77,7 +82,7 @@ func importOCIBlob(ctx context.Context, cs content.Ingester, fs iofs.FS, descrip
 	)
 
 	// WriteBlob verifies the digest and the size while ingesting
-	return content.WriteBlob(ctx, cs, string(descriptor.Digest), r, descriptor)
+	return content.WriteBlob(ctx, cs, ingestRef, r, descriptor)
 }
 
 // this is "docker build" but for "Builder: oci-import"
