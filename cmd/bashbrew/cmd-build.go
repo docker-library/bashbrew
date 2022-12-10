@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/urfave/cli"
 )
@@ -132,6 +133,15 @@ func cmdBuild(c *cli.Context) error {
 				}
 			} else {
 				fmt.Printf("Using %s (%s)\n", cacheTag, r.EntryIdentifier(entry))
+
+				if !dryRun {
+					// https://github.com/docker-library/bashbrew/pull/61/files#r1044926620
+					// abusing "docker build" for "tag something a lot of times, but efficiently" 👀
+					err := dockerBuild(imageTags, "", strings.NewReader("FROM "+cacheTag), "")
+					if err != nil {
+						return cli.NewMultiError(fmt.Errorf(`failed tagging %q: %q`, cacheTag, strings.Join(imageTags, ", ")), err)
+					}
+				}
 			}
 		}
 	}

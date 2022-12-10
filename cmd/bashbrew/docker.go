@@ -255,7 +255,10 @@ func dockerBuild(tags []string, file string, context io.Reader, platform string)
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
-	args = append(args, "--file", file, "--rm", "--force-rm", "-")
+	if file != "" {
+		args = append(args, "--file", file)
+	}
+	args = append(args, "--rm", "--force-rm", "-")
 
 	cmd := exec.Command("docker", args...)
 	cmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=0")
