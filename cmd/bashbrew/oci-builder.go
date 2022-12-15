@@ -96,14 +96,17 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 		return err
 	}
 
+	// added to any string errors we generate to add more helpful debugging context for things like the wrong filename, directory, commit ID, etc.
+	errFileStr := func(file string) string { return fmt.Sprintf("%q (from directory %q in commit %q)", file, dir, commit) }
+
 	// https://github.com/opencontainers/image-spec/blob/v1.0.2/image-layout.md#oci-layout-file
 	var layout imagespec.ImageLayout
 	if err := readJSONFile(fs, "oci-layout", &layout); err != nil {
-		return fmt.Errorf("failed reading oci-layout: %w", err)
+		return fmt.Errorf("failed reading %s: %w", errFileStr("oci-layout"), err)
 	}
 	if layout.Version != "1.0.0" {
 		// "The imageLayoutVersion value will align with the OCI Image Specification version at the time changes to the layout are made, and will pin a given version until changes to the image layout are required."
-		return fmt.Errorf("unsupported OCI image layout version %q", layout.Version)
+		return fmt.Errorf("unsupported OCI image layout version %q in %s", layout.Version, errFileStr("oci-layout"))
 	}
 
 	var manifestDescriptor imagespec.Descriptor
@@ -112,29 +115,29 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 		// https://github.com/opencontainers/image-spec/blob/v1.0.2/image-layout.md#indexjson-file
 		var index imagespec.Index
 		if err := readJSONFile(fs, file, &index); err != nil {
-			return fmt.Errorf("failed reading %q: %w", file, err)
+			return fmt.Errorf("failed reading %s: %w", errFileStr(file), err)
 		}
 		if index.SchemaVersion != 2 {
-			return fmt.Errorf("unsupported schemaVersion %d in %q", index.SchemaVersion, file)
+			return fmt.Errorf("unsupported schemaVersion %d in %s", index.SchemaVersion, errFileStr(file))
 		}
 		if len(index.Manifests) != 1 {
-			return fmt.Errorf("expected only one manifests entry (not %d) in %q", len(index.Manifests), file)
+			return fmt.Errorf("expected only one manifests entry (not %d) in %s", len(index.Manifests), errFileStr(file))
 		}
 		manifestDescriptor = index.Manifests[0]
 	} else {
 		if err := readJSONFile(fs, file, &manifestDescriptor); err != nil {
-			return fmt.Errorf("failed reading %q: %w", file, err)
+			return fmt.Errorf("failed reading %s: %w", errFileStr(file), err)
 		}
 	}
 
 	if manifestDescriptor.MediaType != imagespec.MediaTypeImageManifest {
-		return fmt.Errorf("unsupported mediaType %q in descriptor", manifestDescriptor.MediaType)
+		return fmt.Errorf("unsupported mediaType %q in descriptor in %s", manifestDescriptor.MediaType, errFileStr(file))
 	}
 	if err := manifestDescriptor.Digest.Validate(); err != nil {
-		return fmt.Errorf("invalid digest %q: %w", manifestDescriptor.Digest, err)
+		return fmt.Errorf("invalid digest %q in %s: %w", manifestDescriptor.Digest, errFileStr(file), err)
 	}
 	if manifestDescriptor.Size < 0 {
-		return fmt.Errorf("invalid size %d in descriptor", manifestDescriptor.Size)
+		return fmt.Errorf("invalid size %d in descriptor in %s", manifestDescriptor.Size, errFileStr(file))
 	}
 	// TODO validate Platform is either unset or matches expected value
 
@@ -152,17 +155,17 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 	cs := client.ContentStore()
 
 	if err := importOCIBlob(ctx, cs, fs, manifestDescriptor); err != nil {
-		return fmt.Errorf("failed to import manifest blob (%q): %w", manifestDescriptor.Digest, err)
+		return fmt.Errorf("failed to import manifest blob %s: %w", errFileStr(string(manifestDescriptor.Digest)), err)
 	}
 	var manifest imagespec.Manifest
 	if err := readContentJSON(ctx, cs, manifestDescriptor, &manifest); err != nil {
-		return fmt.Errorf("failed to parse manifest (%q): %w", manifestDescriptor.Digest, err)
+		return fmt.Errorf("failed to parse manifest %s: %w", errFileStr(string(manifestDescriptor.Digest)), err)
 	}
 
 	otherBlobs := append([]imagespec.Descriptor{manifest.Config}, manifest.Layers...)
 	for _, blob := range otherBlobs {
 		if err := importOCIBlob(ctx, cs, fs, blob); err != nil {
-			return fmt.Errorf("failed to import blob (%q): %w", blob.Digest, err)
+			return fmt.Errorf("failed to import blob %s: %w", errFileStr(string(blob.Digest)), err)
 		}
 	}
 
@@ -176,11 +179,11 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 		img2, err := is.Update(ctx, img, "target") // "target" here is to specify that we want to update the descriptor that "Name" points to (if this image name already exists)
 		if err != nil {
 			if !errdefs.IsNotFound(err) {
-				return fmt.Errorf("failed to update image %q: %w", img.Name, err)
+				return fmt.Errorf("failed to update image %q in containerd: %w", img.Name, err)
 			}
 			img2, err = is.Create(ctx, img)
 			if err != nil {
-				return fmt.Errorf("failed to create image %q: %w", img.Name, err)
+				return fmt.Errorf("failed to create image %q in containerd: %w", img.Name, err)
 			}
 		}
 		img = img2 // unnecessary? :)
