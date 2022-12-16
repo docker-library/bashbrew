@@ -52,12 +52,18 @@ func resolveSymlink(f *goGitPlumbingObject.File) (target string, err error) {
 		return "", fmt.Errorf("unexpected: empty symlink %q", f.Name)
 	}
 
+	// we *could* implement this as absolute symlinks being relative to the root of the Git repository, but that wouldn't match the behavior of a normal repository that's been "git clone"'d on disk, so I think that would be a mistake and erroring out is saner here
 	if path.IsAbs(target) {
 		return "", fmt.Errorf("unsupported: %q is an absolute symlink (%q)", f.Name, target)
 	}
 
+	// symlinks are relative to the path they're in, so we need to prepend that
 	target = path.Join(path.Dir(f.Name), target)
 
+	// now let's use path.Clean to get rid of any excess ".." or "." entries in our end result
+	target = path.Clean(target)
+
+	// once we're cleaned, we should have a full path that's relative to the root of the Git repository, so if it still starts with "../", that's a problem that will error later when we try to read it, so let's error out now to bail earlier
 	if strings.HasPrefix(target, "../") {
 		return "", fmt.Errorf("unsupported: %q is a relative symlink outside the tree (%q)", f.Name, target)
 	}
