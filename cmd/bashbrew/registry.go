@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/docker-library/bashbrew/registry"
 )
@@ -15,6 +17,9 @@ func fetchRegistryImageIds(image string) []string {
 
 	img, err := registry.Resolve(ctx, image)
 	if err != nil {
+		if debugFlag {
+			fmt.Fprintf(os.Stderr, "DEBUG: registry.Resolve(%q) => %v\n", image, err)
+		}
 		return nil
 	}
 
@@ -25,6 +30,9 @@ func fetchRegistryImageIds(image string) []string {
 
 	manifests, err := img.Manifests(ctx)
 	if err != nil {
+		if debugFlag {
+			fmt.Fprintf(os.Stderr, "DEBUG: img.Manifests (%q) => %v\n", image, err)
+		}
 		return nil
 	}
 
@@ -36,6 +44,9 @@ func fetchRegistryImageIds(image string) []string {
 		ids = append(ids, manifestDesc.Digest.String())
 		manifest, err := img.At(manifestDesc).Manifest(ctx)
 		if err != nil {
+			if debugFlag {
+				fmt.Fprintf(os.Stderr, "DEBUG: img.Manifest (%q, %q) => %v\n", image, manifestDesc.Digest.String(), err)
+			}
 			continue
 		}
 		ids = append(ids, manifest.Config.Digest.String())
@@ -54,6 +65,9 @@ func fetchRegistryManiestListDigests(image string) []string {
 
 	img, err := registry.Resolve(ctx, image)
 	if err != nil {
+		if debugFlag {
+			fmt.Fprintf(os.Stderr, "DEBUG: registry.Resolve(%q) => %v\n", image, err)
+		}
 		return nil
 	}
 
@@ -64,6 +78,9 @@ func fetchRegistryManiestListDigests(image string) []string {
 
 	manifests, err := img.Manifests(ctx)
 	if err != nil {
+		if debugFlag {
+			fmt.Fprintf(os.Stderr, "DEBUG: img.Manifests (%q) => %v\n", image, err)
+		}
 		return nil
 	}
 	digests := []string{}

@@ -167,6 +167,8 @@ func main() {
 			if !debugFlag {
 				// containerd uses logrus, but it defaults to "info" (which is a bit leaky where we use containerd)
 				logrus.SetLevel(logrus.WarnLevel)
+			} else {
+				logrus.SetLevel(logrus.DebugLevel)
 			}
 
 			arch = c.GlobalString("arch")
@@ -401,9 +403,9 @@ func main() {
 			Category: "plumbing",
 		},
 		{
-			Name:  "remote",
-			Usage: "query registries for bashbrew-related data",
-			Before: subcommandBeforeFactory("remote"),
+			Name:     "remote",
+			Usage:    "query registries for bashbrew-related data",
+			Before:   subcommandBeforeFactory("remote"),
 			Category: "plumbing",
 			Subcommands: []cli.Command{
 				{
