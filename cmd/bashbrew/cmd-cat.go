@@ -56,6 +56,13 @@ func cmdCat(c *cli.Context) error {
 		"arch": func() string {
 			return arch
 		},
+		"gitCache": func() (string, error) {
+			err := ensureGitInit()
+			if err != nil {
+				return "", err
+			}
+			return gitCache(), nil
+		},
 		"ociPlatform": func(arch string) *architecture.OCIPlatform {
 			if ociArch, ok := architecture.SupportedArches[arch]; ok {
 				return &ociArch

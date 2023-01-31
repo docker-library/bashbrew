@@ -403,6 +403,19 @@ func main() {
 			Category: "plumbing",
 		},
 		{
+			Name:  "fetch",
+			Usage: "ensure Git contents are local",
+			Flags: []cli.Flag{
+				commonFlags["all"],
+				commonFlags["apply-constraints"],
+				commonFlags["arch-filter"],
+			},
+			Before: subcommandBeforeFactory("fetch"),
+			Action: cmdFetch,
+
+			Category: "plumbing",
+		},
+		{
 			Name:     "remote",
 			Usage:    "query registries for bashbrew-related data",
 			Before:   subcommandBeforeFactory("remote"),
