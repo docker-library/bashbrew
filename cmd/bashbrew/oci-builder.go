@@ -163,7 +163,15 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 	}
 
 	otherBlobs := append([]imagespec.Descriptor{manifest.Config}, manifest.Layers...)
-	for _, blob := range otherBlobs {
+	for i, blob := range otherBlobs {
+		if i == 0 && blob.MediaType != imagespec.MediaTypeImageConfig {
+			return fmt.Errorf("unsupported mediaType %q for config descriptor %s", blob.MediaType, errFileStr(string(blob.Digest)))
+		} else if i != 0 && blob.MediaType != imagespec.MediaTypeImageLayer && blob.MediaType != imagespec.MediaTypeImageLayerGzip && blob.MediaType != imagespec.MediaTypeImageLayerZstd {
+			return fmt.Errorf("unsupported mediaType %q for layer descriptor %s", blob.MediaType, errFileStr(string(blob.Digest)))
+		}
+		if blob.Size < 0 {
+			return fmt.Errorf("invalid size %d in blob descriptor %s", blob.Size, errFileStr(string(blob.Digest)))
+		}
 		if err := importOCIBlob(ctx, cs, fs, blob); err != nil {
 			return fmt.Errorf("failed to import blob %s: %w", errFileStr(string(blob.Digest)), err)
 		}
