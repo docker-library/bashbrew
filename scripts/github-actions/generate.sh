@@ -27,14 +27,10 @@ export BASHBREW_LIBRARY="$tmp/library"
 eval "${GENERATE_STACKBREW_LIBRARY:-./generate-stackbrew-library.sh}" > "$BASHBREW_LIBRARY/$image"
 
 # if we don't appear to be able to fetch the listed commits, they might live in a PR branch, so we should force them into the Bashbrew cache directly to allow it to do what it needs
-if ! bashbrew from "$image" &> /dev/null; then
-	bashbrewGit="${BASHBREW_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/bashbrew}/git"
-	if [ ! -d "$bashbrewGit" ]; then
-		# if we're here, it's because "bashbrew from" failed so our cache directory might not have been created
-		bashbrew from https://github.com/docker-library/official-images/raw/HEAD/library/hello-world:latest > /dev/null
-	fi
-	git -C "$bashbrewGit" fetch --quiet --update-shallow "$PWD" HEAD > /dev/null
-	bashbrew from "$image" > /dev/null
+if ! bashbrew fetch "$image" &> /dev/null; then
+	gitCache="$(bashbrew cat --format '{{ gitCache }}' "$image")"
+	git -C "$gitCache" fetch --quiet --update-shallow "$PWD" HEAD > /dev/null
+	bashbrew fetch "$image" > /dev/null
 fi
 
 tags="$(bashbrew list --build-order --uniq "$image")"
