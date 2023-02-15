@@ -254,13 +254,14 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 			//Progress: os.Stdout,
 		})
 		if err != nil {
-			fetchErrors = append(fetchErrors, err)
+			fetchErrors = append(fetchErrors, fmt.Errorf("failed fetching %q: %w", fetchString, err))
 			continue
 		}
 
-		commit, err = getGitCommit(entry.ArchGitCommit(arch))
+		archCommit := entry.ArchGitCommit(arch)
+		commit, err = getGitCommit(archCommit)
 		if err != nil {
-			fetchErrors = append(fetchErrors, err)
+			fetchErrors = append(fetchErrors, fmt.Errorf("failed finding Git commit %q after fetching %q: %w", archCommit, fetchString, err))
 			continue
 		}
 
