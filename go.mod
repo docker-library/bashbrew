@@ -3,7 +3,7 @@ module github.com/docker-library/bashbrew
 go 1.18
 
 require (
-	github.com/containerd/containerd v1.6.14
+	github.com/containerd/containerd v1.6.18
 	github.com/go-git/go-git/v5 v5.5.1
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221013174636-8159c8264e2e
 	github.com/sirupsen/logrus v1.9.0
@@ -54,10 +54,10 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37 // indirect
 	google.golang.org/grpc v1.51.0 // indirect
