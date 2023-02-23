@@ -180,8 +180,12 @@ func ociImportBuild(tags []string, commit, dir, file string) error {
 	is := client.ImageService()
 
 	for _, tag := range tags {
+		ref, err := docker.ParseAnyReference(tag)
+		if err != nil {
+			return fmt.Errorf("failed to parse tag %q while updating image in containerd: %w", tag, err)
+		}
 		img := images.Image{
-			Name:   tag,
+			Name:   ref.String(),
 			Target: manifestDescriptor,
 		}
 		img2, err := is.Update(ctx, img, "target") // "target" here is to specify that we want to update the descriptor that "Name" points to (if this image name already exists)
@@ -216,7 +220,11 @@ func ociImportDockerLoad(tags []string) error {
 		archive.WithAllPlatforms(),
 	}
 	for _, tag := range tags {
-		exportOpts = append(exportOpts, archive.WithImage(is, tag))
+		ref, err := docker.ParseAnyReference(tag)
+		if err != nil {
+			return fmt.Errorf("failed to parse tag %q while loading containerd image into Docker: %w", tag, err)
+		}
+		exportOpts = append(exportOpts, archive.WithImage(is, ref.String()))
 	}
 
 	dockerLoad := exec.Command("docker", "load")
@@ -260,7 +268,12 @@ func ociImportLookup(tag string) (*imagespec.Descriptor, error) {
 
 	is := client.ImageService()
 
-	img, err := is.Get(ctx, tag)
+	ref, err := docker.ParseAnyReference(tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse tag %q while looking up containerd ref: %w", tag, err)
+	}
+
+	img, err := is.Get(ctx, ref.String())
 	if err != nil {
 		return nil, err
 	}
