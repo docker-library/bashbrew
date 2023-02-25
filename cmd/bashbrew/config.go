@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli"
 	"github.com/docker-library/bashbrew/pkg/stripper"
+	"github.com/urfave/cli"
 	"pault.ag/go/debian/control"
 )
 

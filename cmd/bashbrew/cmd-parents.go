@@ -33,7 +33,7 @@ func cmdParents(c *cli.Context) error {
 				if err != nil {
 					var (
 						manifestNotFoundErr manifest.ManifestNotFoundError
-						tagNotFoundErr manifest.TagNotFoundError
+						tagNotFoundErr      manifest.TagNotFoundError
 					)
 					if d != depth && (errors.As(err, &manifestNotFoundErr) || errors.As(err, &tagNotFoundErr)) {
 						// if this repo isn't one of the original top-level arguments and our error is just that it's not a supported tag, walk no further ("FROM mcr.microsoft.com/...", etc)
