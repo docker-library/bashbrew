@@ -81,7 +81,11 @@ func cmdBuild(c *cli.Context) error {
 			tags := append([]string{cacheTag}, imageTags...)
 
 			// check whether we've already built this artifact
-			_, err = dockerInspect("{{.Id}}", cacheTag)
+			cachedDesc, err := containerdImageLookup(cacheTag)
+			if err != nil {
+				cachedDesc = nil
+				_, err = dockerInspect("{{.Id}}", cacheTag)
+			}
 			if err != nil {
 				fmt.Printf("Building %s (%s)\n", cacheTag, r.EntryIdentifier(entry))
 				if !dryRun {
@@ -116,13 +120,13 @@ func cmdBuild(c *cli.Context) error {
 						archive.Close() // be sure this happens sooner rather than later (defer might take a while, and we want to reap zombies more aggressively)
 
 					case "oci-import":
-						err := ociImportBuild(tags, commit, entry.ArchDirectory(arch), entry.ArchFile(arch))
+						desc, err := ociImportBuild(tags, commit, entry.ArchDirectory(arch), entry.ArchFile(arch))
 						if err != nil {
 							return cli.NewMultiError(fmt.Errorf(`failed oci-import build of %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 						}
 
-						fmt.Printf("Importing %s into Docker\n", r.EntryIdentifier(entry))
-						err = ociImportDockerLoad(imageTags)
+						fmt.Printf("Importing %s (%s) into Docker\n", r.EntryIdentifier(entry), desc.Digest)
+						err = containerdDockerLoad(*desc, imageTags)
 						if err != nil {
 							return cli.NewMultiError(fmt.Errorf(`failed oci-import into Docker of %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 						}
@@ -135,11 +139,19 @@ func cmdBuild(c *cli.Context) error {
 				fmt.Printf("Using %s (%s)\n", cacheTag, r.EntryIdentifier(entry))
 
 				if !dryRun {
-					// https://github.com/docker-library/bashbrew/pull/61/files#r1044926620
-					// abusing "docker build" for "tag something a lot of times, but efficiently" 👀
-					err := dockerBuild(imageTags, "", strings.NewReader("FROM "+cacheTag), "")
-					if err != nil {
-						return cli.NewMultiError(fmt.Errorf(`failed tagging %q: %q`, cacheTag, strings.Join(imageTags, ", ")), err)
+					if cachedDesc == nil {
+						// https://github.com/docker-library/bashbrew/pull/61#discussion_r1044926620
+						// abusing "docker build" for "tag something a lot of times, but efficiently" 👀
+						err := dockerBuild(imageTags, "", strings.NewReader("FROM "+cacheTag), "")
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed tagging %q: %q`, cacheTag, strings.Join(imageTags, ", ")), err)
+						}
+					} else {
+						fmt.Printf("Importing %s into Docker\n", cachedDesc.Digest)
+						err = containerdDockerLoad(*cachedDesc, tags)
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed (re-)import into Docker of %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+						}
 					}
 				}
 			}

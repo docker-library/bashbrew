@@ -49,17 +49,19 @@ func cmdPush(c *cli.Context) error {
 				tags = append(tags, tag)
 			}
 
-			switch builder := entry.ArchBuilder(arch); builder {
-			case "oci-import":
-				cacheTag, err := r.DockerCacheName(entry)
-				if err != nil {
-					return cli.NewMultiError(fmt.Errorf(`failed calculating "cache hash" for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+			// if we can't successfully calculate our "cache hash", we can't possibly have built the image we're trying to push 🙈
+			cacheTag, err := r.DockerCacheName(entry)
+			if err != nil {
+				return cli.NewMultiError(fmt.Errorf(`failed calculating "cache hash" for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
+			}
+
+			// if the appropriate "bashbrew/cache:xxx" image exists in the containerd image store, we should prefer that (the nature of the cache hash should make this assumption safe)
+			desc, err := containerdImageLookup(cacheTag)
+			if err == nil {
+				if debugFlag {
+					fmt.Printf("Found %s (via %q) in containerd image store\n", desc.Digest, cacheTag)
 				}
-				desc, err := ociImportLookup(cacheTag)
-				if err != nil {
-					return cli.NewMultiError(fmt.Errorf(`failed looking up descriptor for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
-				}
-				skip, update, err := ociImportPushFilter(*desc, tags)
+				skip, update, err := containerdPushFilter(*desc, tags)
 				if err != nil {
 					return cli.NewMultiError(fmt.Errorf(`failed looking up tags for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 				}
@@ -71,19 +73,32 @@ func cmdPush(c *cli.Context) error {
 				}
 				fmt.Printf("Pushing %s to %s\n", desc.Digest, strings.Join(update, ", "))
 				if !dryRun {
-					err := ociImportPush(*desc, update)
+					err := containerdPush(*desc, update)
 					if err != nil {
 						return cli.NewMultiError(fmt.Errorf(`failed pushing %q`, r.EntryIdentifier(entry)), err)
 					}
 				}
+				return nil
+			}
+
+			switch builder := entry.ArchBuilder(arch); builder {
+			case "oci-import":
+				// if after all that checking above, we still didn't push, then we must've failed to lookup
+				return cli.NewMultiError(fmt.Errorf(`failed looking up descriptor for %q (tags %q)`, r.RepoName, entry.TagsString()), err)
 
 			default:
 			TagsLoop:
 				for _, tag := range tags {
 					if !force {
-						localImageId, _ := dockerInspect("{{.Id}}", tag)
+						localImageId, err := dockerInspect("{{.Id}}", tag)
+						if err != nil {
+							return cli.NewMultiError(fmt.Errorf(`failed looking up local image ID for %q`, tag), err)
+						}
 						if debugFlag {
 							fmt.Printf("DEBUG: docker inspect %q -> %q\n", tag, localImageId)
+						}
+						if localImageId == "" {
+							return fmt.Errorf("local image for %q does not seem to exist (or has an empty ID somehow)", tag)
 						}
 						registryImageIds := fetchRegistryImageIds(tag)
 						if debugFlag {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/urfave/cli"
 	"github.com/docker-library/bashbrew/manifest"
+	"github.com/urfave/cli"
 )
 
 func cmdList(c *cli.Context) error {

@@ -42,7 +42,7 @@ var containerdClientCache *containerd.Client = nil
 
 // the returned client is cached, don't Close() it!
 func newContainerdClient(ctx context.Context) (context.Context, *containerd.Client, error) {
-	ns := "bashbrew"
+	ns := "bashbrew-" + arch
 	for _, envKey := range []string{
 		`BASHBREW_CONTAINERD_NAMESPACE`,
 		`CONTAINERD_NAMESPACE`,

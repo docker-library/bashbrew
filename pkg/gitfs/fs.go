@@ -118,9 +118,10 @@ func (fs gitFS) Stat(name string) (fs.FileInfo, error) {
 
 // https://pkg.go.dev/io/fs#File
 type gitFSFile struct {
-	stat fs.FileInfo
+	stat   fs.FileInfo
 	reader io.ReadCloser
 }
+
 func (f gitFSFile) Stat() (fs.FileInfo, error) {
 	return f.stat, nil
 }

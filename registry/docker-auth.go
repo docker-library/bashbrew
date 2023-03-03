@@ -116,6 +116,8 @@ func NewDockerAuthResolver() remotes.Resolver {
 							config,
 						}, nil
 					}
+				} else if strings.Contains(domain, "localhost") {
+					config.Scheme = "http"
 				}
 				return []dockerremote.RegistryHost{config}, nil
 			},

@@ -291,7 +291,11 @@ func dockerBuild(tags []string, file string, context io.Reader, platform string)
 	}
 }
 
-const dockerfileSyntaxEnv = "BASHBREW_BUILDKIT_SYNTAX"
+const (
+	dockerfileSyntaxEnv = "BASHBREW_BUILDKIT_SYNTAX"
+	sbomGeneratorEnv    = "BASHBREW_BUILDKIT_SBOM_GENERATOR"
+	buildxBuilderEnv    = "BUILDX_BUILDER"
+)
 
 func dockerBuildxBuild(tags []string, file string, context io.Reader, platform string) error {
 	dockerfileSyntax, ok := os.LookupEnv(dockerfileSyntaxEnv)
@@ -305,26 +309,88 @@ func dockerBuildxBuild(tags []string, file string, context io.Reader, platform s
 		"--progress", "plain",
 		"--build-arg", "BUILDKIT_SYNTAX=" + dockerfileSyntax,
 	}
+	buildxBuilder := "" != os.Getenv(buildxBuilderEnv)
+	if buildxBuilder {
+		args = append(args, "--provenance", "mode=max")
+	}
+	if sbomGenerator, ok := os.LookupEnv(sbomGeneratorEnv); ok {
+		if buildxBuilder {
+			args = append(args, "--sbom", "generator="+sbomGenerator)
+		} else {
+			return fmt.Errorf("have %q but missing %q", sbomGeneratorEnv, buildxBuilderEnv)
+		}
+	}
 	if platform != "" {
 		args = append(args, "--platform", platform)
 	}
 	for _, tag := range tags {
 		args = append(args, "--tag", tag)
 	}
-	args = append(args, "--file", file, "-")
+	if file != "" {
+		args = append(args, "--file", file)
+	}
+	args = append(args, "-")
+
+	if buildxBuilder {
+		args = append(args, "--output", "type=oci")
+		// TODO ,annotation.xyz.tianon.foo=bar,annotation-manifest-descriptor.xyz.tianon.foo=bar (for OCI source annotations, which this function doesn't currently have access to)
+	}
 
 	cmd := exec.Command("docker", args...)
 	cmd.Stdin = context
+
+	run := func() error {
+		return cmd.Run()
+	}
+	if buildxBuilder {
+		run = func() error {
+			pipe, err := cmd.StdoutPipe()
+			if err != nil {
+				return err
+			}
+			defer pipe.Close()
+
+			err = cmd.Start()
+			if err != nil {
+				return err
+			}
+			defer cmd.Process.Kill()
+
+			_, err = containerdImageLoad(pipe)
+			if err != nil {
+				return err
+			}
+			pipe.Close()
+
+			err = cmd.Wait()
+			if err != nil {
+				return err
+			}
+
+			desc, err := containerdImageLookup(tags[0])
+			if err != nil {
+				return err
+			}
+
+			fmt.Printf("Importing %s into Docker\n", desc.Digest)
+			err = containerdDockerLoad(*desc, tags)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+
+	// intentionally not touching os.Stdout because "buildx build" does *not* put any build output to stdout and in some cases (see above) we use stdout to capture an OCI tarball and pipe it into containerd
 	if debugFlag {
-		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		fmt.Printf("$ docker %q\n", args)
-		return cmd.Run()
+		return run()
 	} else {
 		buf := &bytes.Buffer{}
-		cmd.Stdout = buf
 		cmd.Stderr = buf
-		err := cmd.Run()
+		err := run()
 		if err != nil {
 			err = cli.NewMultiError(err, fmt.Errorf(`docker %q output:%s`, args, "\n"+buf.String()))
 		}
