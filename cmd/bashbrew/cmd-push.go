@@ -78,7 +78,7 @@ func cmdPush(c *cli.Context) error {
 						return cli.NewMultiError(fmt.Errorf(`failed pushing %q`, r.EntryIdentifier(entry)), err)
 					}
 				}
-				return nil
+				continue
 			}
 
 			switch builder := entry.ArchBuilder(arch); builder {
