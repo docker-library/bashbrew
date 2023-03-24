@@ -3,19 +3,19 @@ module github.com/docker-library/bashbrew
 go 1.18
 
 require (
-	github.com/containerd/containerd v1.6.18
+	github.com/containerd/containerd v1.6.19
 	github.com/go-git/go-git/v5 v5.5.1
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221013174636-8159c8264e2e
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli v1.22.10
-	go.etcd.io/bbolt v1.3.6
+	go.etcd.io/bbolt v1.3.7
 	pault.ag/go/debian v0.12.0
 	pault.ag/go/topsort v0.1.1
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/Microsoft/hcsshim v0.9.6 // indirect
+	github.com/Microsoft/hcsshim v0.9.7 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/cloudflare/circl v1.3.1 // indirect
