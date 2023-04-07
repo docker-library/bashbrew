@@ -10,6 +10,8 @@ import (
 	"github.com/containerd/containerd/content/local"
 	"github.com/containerd/containerd/metadata"
 	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/containerd/platforms"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"go.etcd.io/bbolt"
 )
@@ -61,6 +63,11 @@ func newContainerdClient(ctx context.Context) (context.Context, *containerd.Clie
 		return ctx, containerdClientCache, nil
 	}
 
+	opts := []containerd.ClientOpt{
+		// we want to avoid "platforms.Default()" from trying to do detection (and sometimes erroring about "getCPUInfo" not having a variant), so we'll pass an explicit platform matcher
+		containerd.WithDefaultPlatform(platforms.OnlyStrict(ocispec.Platform(ociArch))),
+	}
+
 	for _, envKey := range []string{
 		`BASHBREW_CONTAINERD_CONTENT_ADDRESS`, // TODO if we ever need to connnect to a containerd instance for something more interesting like running containers, we need to have *that* codepath not use _CONTENT_ variants
 		`BASHBREW_CONTAINERD_ADDRESS`,
@@ -72,7 +79,7 @@ func newContainerdClient(ctx context.Context) (context.Context, *containerd.Clie
 				// we'll use a set-but-empty variable as an explicit request to use our built-in implementation
 				break
 			}
-			client, err := containerd.New(socket)
+			client, err := containerd.New(socket, opts...)
 			containerdClientCache = client
 			return ctx, client, err
 		}
@@ -83,7 +90,9 @@ func newContainerdClient(ctx context.Context) (context.Context, *containerd.Clie
 	if err != nil {
 		return ctx, nil, err
 	}
-	client, err := containerd.New("", services)
+	opts = append(opts, services)
+
+	client, err := containerd.New("", opts...)
 	containerdClientCache = client
 	return ctx, client, err
 }
