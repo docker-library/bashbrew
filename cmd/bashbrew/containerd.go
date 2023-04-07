@@ -17,7 +17,7 @@ import (
 func newBuiltinContainerdServices(ctx context.Context) (containerd.ClientOpt, error) {
 	// thanks to https://github.com/Azure/image-rootfs-scanner/blob/e7041e47d1a13e15d73d9c85644542e6758f9f3a/containerd.go#L42-L87 for inspiring this magic
 
-	root := filepath.Join(defaultCache, "containerd")
+	root := filepath.Join(defaultCache, "containerd", arch) // because our bbolt is so highly contested, we'll use a containerd directory per-arch 😭
 	dbPath := filepath.Join(root, "metadata.db")
 	contentRoot := filepath.Join(root, "content")
 
@@ -29,6 +29,9 @@ func newBuiltinContainerdServices(ctx context.Context) (containerd.ClientOpt, er
 	db, err := bbolt.Open(dbPath, 0600, &bbolt.Options{
 		Timeout: 1 * time.Minute,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	mdb := metadata.NewDB(db, cs, nil)
 	return containerd.WithServices(
