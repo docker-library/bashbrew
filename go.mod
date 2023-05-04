@@ -1,6 +1,6 @@
 module github.com/docker-library/bashbrew
 
-go 1.18
+go 1.20
 
 require (
 	github.com/containerd/containerd v1.6.19
