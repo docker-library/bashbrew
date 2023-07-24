@@ -36,6 +36,14 @@ func cmdCat(c *cli.Context) error {
 	format := c.String("format")
 	formatFile := c.String("format-file")
 
+	buildOrder := c.Bool("build-order")
+	if buildOrder {
+		repos, err = sortRepos(repos, false) // do not (cannot) applyConstraints (we'd have to modify the actual objects to remove Entries)
+		if err != nil {
+			return cli.NewMultiError(fmt.Errorf(`failed sorting repo list`), err)
+		}
+	}
+
 	templateName := "--format"
 	tmplMultiErr := fmt.Errorf(`failed parsing --format %q`, format)
 	if formatFile != "" {

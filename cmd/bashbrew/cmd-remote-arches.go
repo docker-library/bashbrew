@@ -22,12 +22,12 @@ func cmdRemoteArches(c *cli.Context) error {
 	for _, arg := range args {
 		img, err := registry.Resolve(ctx, arg)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to resolve %s: %w", arg, err)
 		}
 
 		arches, err := img.Architectures(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to query arches of %s: %w", arg, err)
 		}
 
 		if doJson {

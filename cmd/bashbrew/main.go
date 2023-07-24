@@ -188,6 +188,10 @@ func main() {
 
 			archNamespaces = map[string]string{}
 			for _, archMapping := range c.GlobalStringSlice("arch-namespace") {
+				if archMapping == "" {
+					// "BASHBREW_ARCH_NAMESPACES=" (should be the same as the empty list)
+					continue
+				}
 				splitArchMapping := strings.SplitN(archMapping, "=", 2)
 				splitArch, splitNamespace := strings.TrimSpace(splitArchMapping[0]), strings.TrimSpace(splitArchMapping[1])
 				archNamespaces[splitArch] = splitNamespace
@@ -224,6 +228,10 @@ func main() {
 			Name:  "arch-filter",
 			Usage: "like apply-constraints, but only for Architectures",
 		},
+		"build-order": cli.BoolFlag{
+			Name:  "build-order",
+			Usage: "sort by the order repos would need to build (topsort)",
+		},
 		"depth": cli.IntFlag{
 			Name:  "depth",
 			Value: 0,
@@ -258,10 +266,7 @@ func main() {
 				commonFlags["uniq"],
 				commonFlags["apply-constraints"],
 				commonFlags["arch-filter"],
-				cli.BoolFlag{
-					Name:  "build-order",
-					Usage: "sort by the order repos would need to build (topsort)",
-				},
+				commonFlags["build-order"],
 				cli.BoolFlag{
 					Name:  "repos",
 					Usage: `list only repos, not repo:tag (unless "repo:tag" is explicitly specified)`,
@@ -380,6 +385,7 @@ func main() {
 					Name:  "format-file, F",
 					Usage: "use the contents of `FILE` for \"--format\"",
 				},
+				commonFlags["build-order"],
 			},
 			Before: subcommandBeforeFactory("cat"),
 			Action: cmdCat,
