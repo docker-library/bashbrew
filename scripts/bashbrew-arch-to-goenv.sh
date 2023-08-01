@@ -2,8 +2,9 @@
 set -eu
 
 # usage: (from within another script)
-#   eval "$(./.bashbrew-arch-to-goenv.sh)"
-# since we need those new environment variables in our other script
+#   shell="$(./bashbrew-arch-to-goenv.sh arm32v6)"
+#   eval "$shell"
+# since we need those new environment variables set in our other script
 
 bashbrewArch="$1"; shift # "amd64", "arm32v5", "windows-amd64", etc.
 
@@ -20,8 +21,10 @@ case "$arch" in
 
 	arm64v*)
 		printf 'export GOARCH="%s"\n' 'arm64'
-		# no GOARM for arm64 (yet?) -- https://github.com/golang/go/blob/1e72bf62183ea21b9affffd4450d44d994393899/src/cmd/internal/objabi/util.go#L40
-		#printf 'export GOARM="%s"\n' "${arch#arm64v}"
+		# no GOARM(64) for arm64 (yet?):
+		#   https://github.com/golang/go/blob/be0e0b06ac53d3d02ea83b479790404057b6f19b/src/internal/buildcfg/cfg.go#L86
+		#   https://github.com/golang/go/issues/60905
+		#printf 'export GOARM64="v%s"\n' "${arch#arm64v}"
 		printf 'unset GOARM\n'
 		;;
 
@@ -29,6 +32,8 @@ case "$arch" in
 		printf 'export GOARCH="%s"\n' '386'
 		printf 'unset GOARM\n'
 		;;
+
+	# TODO GOAMD64: https://github.com/golang/go/blob/be0e0b06ac53d3d02ea83b479790404057b6f19b/src/internal/buildcfg/cfg.go#L57-L70 (v1 implied)
 
 	*)
 		printf 'export GOARCH="%s"\n' "$arch"
