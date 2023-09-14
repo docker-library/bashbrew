@@ -53,7 +53,8 @@ for tag in $tags; do
 				"file": {{- json ($e.ArchFile $arch) -}},
 				"builder": {{- json ($e.ArchBuilder $arch) -}},
 				"constraints": {{- json $e.Constraints -}},
-				"froms": {{- json ($.ArchDockerFroms $arch $e) -}}
+				"froms": {{- json ($.ArchDockerFroms $arch $e) -}},
+				"platform": {{- json (ociPlatform $arch).String -}}
 			{{- "}" -}}
 		' "$bashbrewImage" | jq -c '
 			{
@@ -83,6 +84,10 @@ for tag in $tags; do
 							else
 								"echo >&2 " + ("error: unknown/unsupported builder: " + .builder | @sh) + "\nexit 1\n#"
 							end
+						]
+						+ [
+							# TODO error out on unsupported platforms, or just let the emulation go wild?
+							"--platform", .platform
 						]
 						+ (
 							.tags
