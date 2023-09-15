@@ -41,9 +41,12 @@ func cmdChildren(c *cli.Context) error {
 				continue
 			}
 
+			// TODO this is buggy with respect to SharedTags, but it's really complicated to fix correctly (essentially, the shared tags become "owned" by one specific leg of the shared set, which is then hard to reconcile -- use "--arch-filter" if you want SharedTags to work [more] correctly [caveat Windows, where we can't know which leg to assign them to; perhaps full "--apply-constaints" there])
 			tags := r.Tags(namespace, false, entry)
 			for _, tag := range tags {
-				canonical[tag] = tags[0]
+				if _, ok := canonical[tag]; !ok { // again, see the note above -- this is a hack that makes it "work" in the common case of the Linux tags being listed first and those being the ones we're interested in (so they "own" the shared tags and don't get clobbered), and that's *mostly* safe because we enforce that any Windows image needs to be FROM an explicit Windows base/kernel version (not a shared tag) anyways, but it's still pretty hacky/sketchy and the algorithm here probably needs (yet another, maybe minor?) redesign 😭
+					canonical[tag] = tags[0]
+				}
 			}
 
 			entryArches := []string{arch}
