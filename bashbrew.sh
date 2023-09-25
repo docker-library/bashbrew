@@ -6,7 +6,8 @@ set -Eeuo pipefail
 dir="$(readlink -f "$BASH_SOURCE")"
 dir="$(dirname "$dir")"
 
-export GO111MODULE=on
+: "${CGO_ENABLED:=0}"
+export GO111MODULE=on CGO_ENABLED
 (
 	cd "$dir"
 	go build -o bin/bashbrew ./cmd/bashbrew > /dev/null
