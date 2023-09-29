@@ -118,7 +118,16 @@ END {
 	append_jq(agg_jq)
 	agg_jq = ""
 
-	jq_expr = "if env.version then .[env.version] else . end | (\n" jq_expr "\n)"
+	# Test that the shared jq module exists before loading it
+	# This prevents breaking existing build that don't use the shared module
+	test = "jq -n 'include \"jq-template\"; \"ok\"' 2>&1 > /dev/null"
+
+	if (system (test) != 0) {
+		jq_expr = "if env.version then .[env.version] else . end | (\n" jq_expr "\n)"
+	} else {
+		jq_expr = "include \"jq-template\"; if env.version then .[env.version] else . end | (\n" jq_expr "\n)"
+	}
+
 	jq_expr = jq_expr_defs jq_expr
 
 	if (ENVIRON["DEBUG"]) {
