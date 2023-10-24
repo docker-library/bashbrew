@@ -21,6 +21,6 @@ jq --arg dpkgSmokeTest '[ "$(dpkg --print-architecture)" = "amd64" ]' '
 			)
 		] | join("\n"))
 		# adjust "docker buildx build" lines to include appropriate "--build-context" flags (https://github.com/docker/buildx/pull/1886)
-		| .runs.build |= gsub("docker buildx build "; "docker buildx build " + ($froms | unique | map(@sh "--build-context \(.)=docker-image://\("i386/" + .)") | join(" ")) + " ")
+		| .runs.build |= ( gsub("docker buildx build "; "docker buildx build " + ($froms | unique | map(@sh "--build-context \(.)=docker-image://\("i386/" + .)") | join(" ")) + " ") | gsub( "--platform[= ]linux/[^ ]+"; "--platform linux/386") )
 	]
 ' "$@"
