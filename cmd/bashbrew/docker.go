@@ -15,6 +15,7 @@ import (
 
 	"github.com/docker-library/bashbrew/manifest"
 	"github.com/urfave/cli"
+	"github.com/kballard/go-shellquote"
 )
 
 type dockerfileMetadata struct {
@@ -295,6 +296,7 @@ const (
 	dockerfileSyntaxEnv = "BASHBREW_BUILDKIT_SYNTAX"
 	sbomGeneratorEnv    = "BASHBREW_BUILDKIT_SBOM_GENERATOR"
 	buildxBuilderEnv    = "BUILDX_BUILDER"
+	buildxArgsEnv       = "BUILDX_ARGS"
 )
 
 func dockerBuildxBuild(tags []string, file string, context io.Reader, platform string) error {
@@ -308,6 +310,13 @@ func dockerBuildxBuild(tags []string, file string, context io.Reader, platform s
 		"build",
 		"--progress", "plain",
 		"--build-arg", "BUILDKIT_SYNTAX=" + dockerfileSyntax,
+	}
+	buildxArgs, err := shellquote.Split(os.Getenv(buildxArgsEnv))
+	if err != nil {
+			return fmt.Errorf("%s in buildx arguments: %s.", err, os.Getenv(buildxArgsEnv))
+	}
+	if len(buildxArgs) > 0 {
+		args = append(args, buildxArgs...)
 	}
 	buildxBuilder := "" != os.Getenv(buildxBuilderEnv)
 	if buildxBuilder {
