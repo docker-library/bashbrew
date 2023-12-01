@@ -28,6 +28,12 @@ func fetchRegistryImageIds(image string) []string {
 		return ids
 	}
 
+	ids := []string{}
+	if img.IsImageIndex() {
+		ids = append(ids, digest)
+		return ids // see note above -- this function is used for "docker push" which does not and cannot (currently) support a manifest list / image index
+	}
+
 	manifests, err := img.Manifests(ctx)
 	if err != nil {
 		if debugFlag {
@@ -36,10 +42,8 @@ func fetchRegistryImageIds(image string) []string {
 		return nil
 	}
 
-	ids := []string{}
-	if img.IsImageIndex() {
-		ids = append(ids, digest)
-	}
+	// TODO balk if manifests has more than one entry in it
+
 	for _, manifestDesc := range manifests {
 		ids = append(ids, manifestDesc.Digest.String())
 		manifest, err := img.At(manifestDesc).Manifest(ctx)
