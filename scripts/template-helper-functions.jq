@@ -25,12 +25,9 @@ def sbom:
 						referenceLocator: ("pkg:generic/" + .name + "@" + .version + "?" + (.params | [to_entries[] | .key + "=" + .value] | join("\u0026")))
 					}
 				],
-				licenseDeclared: (if .licenses | length > 0 then
-					(.licenses | join(" AND "))
-				else
-					"NOASSERTION"
-				end)
 			}
+			+ if .licenses then { licenseDeclared: (.licenses | join(" AND ")) } else {} end
+			+ if .supplier then { supplier: .supplier } else {} end
 		]
 	}
 ;
