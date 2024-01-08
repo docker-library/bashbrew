@@ -89,6 +89,7 @@ func importOCIBlob(ctx context.Context, cs content.Store, fs iofs.FS, descriptor
 
 // this is "docker build" but for "Builder: oci-import"
 func ociImportBuild(tags []string, commit, dir, file string) (*imagespec.Descriptor, error) {
+	// TODO use r.archGitFS (we have no r or arch or entry here 😅)
 	fs, err := gitCommitFS(commit)
 	if err != nil {
 		return nil, err

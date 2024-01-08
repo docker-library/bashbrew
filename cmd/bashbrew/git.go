@@ -96,6 +96,20 @@ func getGitCommit(commit string) (string, error) {
 	return h.String(), nil
 }
 
+func (r Repo) archGitFS(arch string, entry *manifest.Manifest2822Entry) (fs.FS, error) {
+	commit, err := r.fetchGitRepo(arch, entry)
+	if err != nil {
+		return nil, fmt.Errorf("failed fetching %q: %w", r.EntryIdentifier(entry), err)
+	}
+
+	gitFS, err := gitCommitFS(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	return fs.Sub(gitFS, entry.ArchDirectory(arch))
+}
+
 func gitCommitFS(commit string) (fs.FS, error) {
 	if err := ensureGitInit(); err != nil {
 		return nil, err

@@ -5,6 +5,8 @@ import (
 	"pault.ag/go/topsort"
 )
 
+// TODO unify archFilter and applyConstraints handling by pre-filtering the full list of Repo objects such that all that remains are things we should process (thus removing all "if" statements throughout the various loops); re-doing the Architectures and Entries lists to only include ones we should process, etc
+
 func sortRepos(repos []string, applyConstraints bool) ([]string, error) {
 	rs := []*Repo{}
 	rsMap := map[*Repo]string{}
@@ -103,10 +105,10 @@ func sortRepoObjects(rs []*Repo, applyConstraints bool) ([]*Repo, error) {
 				continue
 			}
 			/*
-			// TODO need archFilter here :(
-			if archFilter && !entry.HasArchitecture(arch) {
-				continue
-			}
+				// TODO need archFilter here :(
+				if archFilter && !entry.HasArchitecture(arch) {
+					continue
+				}
 			*/
 
 			entryArches := []string{arch}

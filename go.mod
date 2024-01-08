@@ -9,6 +9,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli v1.22.10
 	go.etcd.io/bbolt v1.3.7
+	golang.org/x/term v0.5.0
 	pault.ag/go/debian v0.12.0
 	pault.ag/go/topsort v0.1.1
 )
