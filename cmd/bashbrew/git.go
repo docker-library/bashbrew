@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/urfave/cli"
 
@@ -108,6 +109,21 @@ func (r Repo) archGitFS(arch string, entry *manifest.Manifest2822Entry) (fs.FS, 
 	}
 
 	return fs.Sub(gitFS, entry.ArchDirectory(arch))
+}
+
+// returns the timestamp of the ArchGitCommit -- useful for SOURCE_DATE_EPOCH
+func (r Repo) ArchGitTime(arch string, entry *manifest.Manifest2822Entry) (time.Time, error) {
+	f, err := r.archGitFS(arch, entry)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	fi, err := fs.Stat(f, ".")
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return fi.ModTime(), nil
 }
 
 func gitCommitFS(commit string) (fs.FS, error) {

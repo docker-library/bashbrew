@@ -17,6 +17,14 @@ import (
 
 // https://github.com/go-git/go-git/issues/296
 
+func CommitTime(commit *goGitPlumbingObject.Commit) time.Time {
+	if commit.Committer.When.After(commit.Author.When) {
+		return commit.Committer.When
+	} else {
+		return commit.Author.When
+	}
+}
+
 func CommitHash(repo *goGit.Repository, commit string) (fs.FS, error) {
 	gitCommit, err := repo.CommitObject(goGitPlumbing.NewHash(commit))
 	if err != nil {
@@ -31,6 +39,7 @@ func CommitHash(repo *goGit.Repository, commit string) (fs.FS, error) {
 			storer: repo.Storer,
 			tree:   tree,
 			name:   ".",
+			Mod:    CommitTime(gitCommit),
 		},
 	}, nil
 }
@@ -48,6 +57,8 @@ type gitFS struct {
 	storer goGitPlumbingStorer.EncodedObjectStorer
 	tree   *goGitPlumbingObject.Tree
 	entry  *goGitPlumbingObject.TreeEntry // might be nil ("." at the top-level of the repo)
+
+	Mod time.Time
 
 	// cached values
 	name string // full path from the repository root
@@ -342,7 +353,7 @@ func (f gitFS) Mode() fs.FileMode {
 
 // https://pkg.go.dev/io/fs#FileInfo: modification time
 func (f gitFS) ModTime() time.Time {
-	return time.Time{} // TODO maybe pass down whichever is more recent of commit.Author.When vs commit.Committer.When ?
+	return f.Mod
 }
 
 // https://pkg.go.dev/io/fs#FileInfo: abbreviation for Mode().IsDir()
