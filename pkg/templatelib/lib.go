@@ -1,6 +1,8 @@
 package templatelib
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -135,4 +137,10 @@ var FuncMap = template.FuncMap{
 			return unsetVal
 		}
 	}),
+
+	// {{- sha256sum "hello world" -}}
+	"sha256sum": func(input string) string {
+		hash := sha256.Sum256([]byte(input))
+		return hex.EncodeToString(hash[:])
+	},
 }
