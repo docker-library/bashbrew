@@ -55,6 +55,9 @@ var dockerfileMetadataCache = map[string]*dockerfileMetadata{}
 func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822Entry) (*dockerfileMetadata, error) {
 	if builder := entry.ArchBuilder(arch); builder == "oci-import" {
 		return &dockerfileMetadata{
+			StageFroms: []string{
+				"scratch",
+			},
 			Froms: []string{
 				"scratch",
 			},
