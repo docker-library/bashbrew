@@ -34,13 +34,15 @@ func CommitHash(repo *goGit.Repository, commit string) (fs.FS, error) {
 	if err != nil {
 		return nil, err
 	}
+	f := &gitFS{
+		storer: repo.Storer,
+		tree:   tree,
+		name:   ".",
+		Mod:    CommitTime(gitCommit),
+	}
+	f.root = f
 	return gitFSFS{
-		gitFS: &gitFS{
-			storer: repo.Storer,
-			tree:   tree,
-			name:   ".",
-			Mod:    CommitTime(gitCommit),
-		},
+		gitFS: f,
 	}, nil
 }
 
@@ -54,6 +56,8 @@ type gitFSFS struct {
 // https://pkg.go.dev/io/fs#FileInfo
 // https://pkg.go.dev/io/fs#DirEntry
 type gitFS struct {
+	root *gitFS // used so we can rewind back to the root if we need to (see symlink handling code; should *only* be set in CommitHash / constructors)
+
 	storer goGitPlumbingStorer.EncodedObjectStorer
 	tree   *goGitPlumbingObject.Tree
 	entry  *goGitPlumbingObject.TreeEntry // might be nil ("." at the top-level of the repo)
@@ -172,7 +176,10 @@ func (f gitFS) statEntry(name string, entry *goGitPlumbingObject.TreeEntry, foll
 		if target, err := fi.resolveLink(); err != nil {
 			return nil, err
 		} else if target != "" {
-			return f.stat(target, followSymlinks)
+			// the value from resolveLink is relative to the root
+			return f.root.stat(target, followSymlinks)
+			// ideally this would "just" use "path.Rel" to make "target" relative to "f.name" instead, but "path.Rel" does not exist and only "filepath.Rel" does which would break this code on Windows, so instead we added a "root" pointer that we pass around forever that links us back to the root of our "Tree"
+			// we could technically solve this by judicious use of "../" (with enough "../" to catch all the "/" in "f.name"), but it seems simpler and more obvious (and less error prone) to just pass around a pointer to the root
 		}
 	}
 
