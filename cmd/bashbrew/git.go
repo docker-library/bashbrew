@@ -280,6 +280,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		err := gitRemote.Fetch(&goGit.FetchOptions{
 			RefSpecs: []goGitConfig.RefSpec{goGitConfig.RefSpec(fetchString)},
 			Tags:     goGit.NoTags,
+			Depth:    1,
 
 			//Progress: os.Stdout,
 		})
