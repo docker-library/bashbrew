@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -242,7 +241,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 			return "", err
 		}
 
-		tempRefDir, err := ioutil.TempDir(refBaseDir, "temp")
+		tempRefDir, err := os.MkdirTemp(refBaseDir, "temp")
 		if err != nil {
 			return "", err
 		}
