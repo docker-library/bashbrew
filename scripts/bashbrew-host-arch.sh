@@ -11,6 +11,8 @@ if command -v apk > /dev/null && tryArch="$(apk --print-arch)"; then
 	arch="$tryArch"
 elif command -v dpkg > /dev/null && tryArch="$(dpkg --print-architecture)"; then
 	arch="${tryArch##*-}"
+elif command -v rpm > /dev/null && tryArch="$(rpm --query --queryformat='%{ARCH}' rpm)"; then
+	arch="$tryArch"
 elif command -v uname > /dev/null && tryArch="$(uname -m)"; then
 	echo >&2 "warning: neither of 'dpkg' or 'apk' found, falling back to 'uname'"
 	arch="$tryArch"
@@ -28,7 +30,8 @@ case "$arch" in
 	amd64 | x86_64)    found 'amd64'    ;;
 	arm64 | aarch64)   found 'arm64v8'  ;;
 	armel)             found 'arm32v5'  ;;
-	armv7)             found 'arm32v7'  ;;
+	armv6*)            found 'arm32v6'  ;;
+	armv7*)            found 'arm32v7'  ;;
 	i[3456]86 | x86)   found 'i386'     ;;
 	mips64el)          found 'mips64le' ;; # TODO "uname -m" is just "mips64" (which is also "apk --print-arch" on big-endian MIPS) so we ought to disambiguate that somehow
 	ppc64el | ppc64le) found 'ppc64le'  ;;
