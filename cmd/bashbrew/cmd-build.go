@@ -108,7 +108,7 @@ func cmdBuild(c *cli.Context) error {
 						defer archive.Close()
 
 						if builder == "buildkit" {
-							err = dockerBuildxBuild(tags, entry.ArchFile(arch), archive, platform)
+							err = dockerBuildxBuild(tags, entry.ArchFile(arch), archive, platform, entry.SbomGenerator)
 						} else {
 							// TODO use "meta.StageNames" to do "docker build --target" so we can tag intermediate stages too for cache (streaming "git archive" directly to "docker build" makes that a little hard to accomplish without re-streaming)
 							err = dockerBuild(tags, entry.ArchFile(arch), archive, platform)
