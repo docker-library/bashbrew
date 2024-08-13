@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	GitCommitRegex = regexp.MustCompile(`^[0-9a-f]{1,64}$`)
+	GitCommitRegex = regexp.MustCompile(`^([0-9a-f]{40}|[0-9a-f]{64})$`)
 	GitFetchRegex  = regexp.MustCompile(`^refs/(heads|tags)/[^*?:]+$`)
 
 	// https://github.com/docker/distribution/blob/v2.7.1/reference/regexp.go#L37
