@@ -21,10 +21,11 @@ if ! command -v bashbrew &> /dev/null; then
 	bashbrew --version > /dev/null
 fi
 
-mkdir "$tmp/library"
-export BASHBREW_LIBRARY="$tmp/library"
+mkdir "$tmp/library" # not exporting this as BASHBREW_LIBRARY yet so that "generate-stackbrew-library.sh" gets the externally-set value of BASHBREW_LIBRARY (or unset value) so it can use that to change behavior (see https://github.com/docker-library/buildpack-deps/commit/cc2dc88e04e82cb4c4c2091205d888a5d5b386f3 for an example)
 
-eval "${GENERATE_STACKBREW_LIBRARY:-./generate-stackbrew-library.sh}" > "$BASHBREW_LIBRARY/$image"
+eval "${GENERATE_STACKBREW_LIBRARY:-./generate-stackbrew-library.sh}" > "$tmp/library/$image"
+
+export BASHBREW_LIBRARY="$tmp/library"
 
 # if we don't appear to be able to fetch the listed commits, they might live in a PR branch, so we should force them into the Bashbrew cache directly to allow it to do what it needs
 if ! bashbrew fetch "$image" &> /dev/null; then
