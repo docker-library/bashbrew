@@ -199,14 +199,9 @@ strategy="$(
 						"# https://github.com/docker-library/bashbrew/pull/43",
 						if ([ .meta.entries[].builder ] | index("buildkit")) then
 							# https://github.com/docker-library/bashbrew/pull/70#issuecomment-1461033890 (we need to _not_ set BASHBREW_ARCH here)
-							"if [ -x ~/oi/.bin/bashbrew-buildkit-env-setup.sh ]; then",
-							"\t# https://github.com/docker-library/official-images/pull/14212",
-							"\tbuildkitEnvs=\"$(~/oi/.bin/bashbrew-buildkit-env-setup.sh)\"",
-							"\tjq <<<\"$buildkitEnvs\" -r \(env.envObjectToGitHubEnvFileJQ | @sh) | tee -a \"$GITHUB_ENV\"",
-							"else",
-							"\tBASHBREW_BUILDKIT_SYNTAX=\"$(< ~/oi/.bashbrew-buildkit-syntax)\"; export BASHBREW_BUILDKIT_SYNTAX",
-							"\tprintf \"BASHBREW_BUILDKIT_SYNTAX=%q\\n\" \"$BASHBREW_BUILDKIT_SYNTAX\" >> \"$GITHUB_ENV\"",
-							"fi",
+							# https://github.com/docker-library/official-images/pull/14212
+							"buildkitEnvs=\"$(~/oi/.bin/bashbrew-buildkit-env-setup.sh)\"",
+							"jq <<<\"$buildkitEnvs\" -r \(env.envObjectToGitHubEnvFileJQ | @sh) | tee -a \"$GITHUB_ENV\"",
 							empty
 						else
 							empty
