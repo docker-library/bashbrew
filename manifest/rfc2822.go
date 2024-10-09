@@ -38,12 +38,13 @@ type Manifest2822Entry struct {
 
 	Architectures []string `delim:"," strip:"\n\r\t "`
 
-	GitRepo   string
-	GitFetch  string
-	GitCommit string
-	Directory string
-	File      string
-	Builder   string
+	GitRepo       string
+	GitFetch      string
+	GitCommit     string
+	Directory     string
+	File          string
+	Builder       string
+	SbomGenerator string
 
 	// architecture-specific versions of the above fields
 	ArchValues map[string]string
