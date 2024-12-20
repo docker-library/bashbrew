@@ -61,7 +61,9 @@ for tag in $tags; do
 			{
 				name: .name,
 				os: (
-					if (.constraints | contains(["windowsservercore-ltsc2022"])) or (.constraints | contains(["nanoserver-ltsc2022"])) then
+					if (.constraints | contains(["windowsservercore-ltsc2025"])) or (.constraints | contains(["nanoserver-ltsc2025"])) then
+						"windows-2025"
+					elif (.constraints | contains(["windowsservercore-ltsc2022"])) or (.constraints | contains(["nanoserver-ltsc2022"])) then
 						"windows-2022"
 					elif (.constraints | contains(["windowsservercore-1809"])) or (.constraints | contains(["nanoserver-1809"])) then
 						"windows-2019"
