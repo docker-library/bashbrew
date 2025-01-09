@@ -101,7 +101,7 @@ func TestParse(t *testing.T) {
 			`,
 			metadata: dockerfile.Metadata{
 				StageFroms: []string{"scratch"},
-				Froms:      []string{"scratch"}, // TODO this should include "busybox:uclibc"
+				Froms:      []string{"scratch", "busybox:uclibc"},
 			},
 		},
 		{
@@ -117,7 +117,7 @@ func TestParse(t *testing.T) {
 				StageFroms:     []string{"busybox:uclibc", "scratch"},
 				StageNames:     []string{"bb"},
 				StageNameFroms: map[string]string{"bb": "busybox:uclibc"},
-				Froms:          []string{"busybox:uclibc", "scratch"}, // TODO this should end with "busybox:uclibc"
+				Froms:          []string{"busybox:uclibc", "scratch", "busybox:uclibc"},
 			},
 		},
 	} {

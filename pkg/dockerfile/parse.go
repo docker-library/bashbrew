@@ -108,6 +108,49 @@ func ParseReader(dockerfile io.Reader) (*Metadata, error) {
 
 				meta.Froms = append(meta.Froms, from)
 			}
+
+		case "RUN": // TODO combine this and the above COPY-parsing code somehow sanely
+			for _, arg := range fields[1:] {
+				if !strings.HasPrefix(arg, "--") {
+					// doesn't appear to be a "flag"; time to bail!
+					break
+				}
+				if !strings.HasPrefix(arg, "--mount=") {
+					// ignore any flags we're not interested in
+					continue
+				}
+				csv := arg[len("--mount="):]
+				// TODO more correct CSV parsing
+				fields := strings.Split(csv, ",")
+				var mountType, from string
+				for _, field := range fields {
+					if strings.HasPrefix(field, "type=") {
+						mountType = field[len("type="):]
+						continue
+					}
+					if strings.HasPrefix(field, "from=") {
+						from = field[len("from="):]
+						continue
+					}
+				}
+				if mountType != "bind" || from == "" {
+					// this is probably something we should be worried about, but not something we're interested in parsing
+					continue
+				}
+
+				if stageFrom, ok := meta.StageNameFroms[from]; ok {
+					// see note above regarding stage names in FROM
+					from = stageFrom
+				} else if stageNumber, err := strconv.Atoi(from); err == nil && stageNumber < len(meta.StageFroms) {
+					// must be a stage number, we should resolve it too
+					from = meta.StageFroms[stageNumber]
+				}
+
+				// make sure to add ":latest" if it's implied
+				from = latestizeRepoTag(from)
+
+				meta.Froms = append(meta.Froms, from)
+			}
 		}
 	}
 	if err := scanner.Err(); err != nil {
