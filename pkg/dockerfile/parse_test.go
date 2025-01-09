@@ -76,6 +76,44 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "empty continuations",
+			dockerfile: `
+				\
+				\
+				\
+				\
+				\
+				\
+			`,
+		},
+		{
+			name: "continuation edge cases",
+			dockerfile: `
+				# continuation does not apply to this comment \
+				FROM scratch
+				# but everything below this is part of a single continuation
+
+				FROM\
+
+				\     
+				\      
+
+				\     
+				\    
+
+				# comments inside are fine
+				# and really yucky empty lines:
+							     						
+				\
+				\
+
+				scratch\
+			`,
+			metadata: dockerfile.Metadata{
+				Froms: []string{"scratch", "scratch"},
+			},
+		},
+		{
 			// TODO is this even something that's supported by classic builder/buildkit? (Tianon *thinks* it was supported once, but maybe he's misremembering and it's never been a thing Dockerfiles, only docker build --target=N ?)
 			name: "numbered stages",
 			dockerfile: `

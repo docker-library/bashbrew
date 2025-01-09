@@ -5,6 +5,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 type Metadata struct {
@@ -31,10 +32,11 @@ func ParseReader(dockerfile io.Reader) (*Metadata, error) {
 		line := strings.TrimSpace(scanner.Text())
 
 		if line == "" {
-			// ignore blank lines
+			// ignore straight up blank lines (no complexity)
 			continue
 		}
 
+		// (we can't have a comment that ends in a continuation line - that's not continuation, that's part of the comment)
 		if line[0] == '#' {
 			// TODO handle "escape" parser directive
 			// TODO handle "syntax" parser directive -- explode appropriately (since custom syntax invalidates our Dockerfile parsing)
@@ -44,20 +46,36 @@ func ParseReader(dockerfile io.Reader) (*Metadata, error) {
 
 		// handle line continuations
 		// (TODO see note above regarding "escape" parser directive)
-		for line[len(line)-1] == '\\' && scanner.Scan() {
-			nextLine := strings.TrimSpace(scanner.Text())
-			if nextLine == "" || nextLine[0] == '#' {
-				// ignore blank lines and comments
+		for line[len(line)-1] == '\\' {
+			if !scanner.Scan() {
+				line = line[0:len(line)-1]
+				break
+			}
+			// "strings.TrimRightFunc(IsSpace)" because whitespace *after* the escape character is supported and ignored 🙈
+			nextLine := strings.TrimRightFunc(scanner.Text(), unicode.IsSpace)
+			if nextLine == "" { // if it's all space, TrimRight will be TrimSpace 😏
+				// ignore "empty continuation" lines (https://github.com/moby/moby/pull/33719)
+				continue
+			}
+			if strings.TrimLeftFunc(nextLine, unicode.IsSpace)[0] == '#' {
+				// ignore comments inside continuation (https://github.com/moby/moby/issues/29005)
 				continue
 			}
 			line = line[0:len(line)-1] + nextLine
 		}
 
+
+		// TODO *technically* a line like "   RUN     echo  hi    " should be parsed as "RUN" "echo  hi" (cut off instruction, then the rest of the line with TrimSpace), but for our needs "strings.Fields" is good enough for now
+
+		// line = strings.TrimSpace(line) // (emulated below; "strings.Fields" does essentially the same exact thing so we don't need to do it explicitly here too)
+
 		fields := strings.Fields(line)
+
 		if len(fields) < 1 {
-			// must be a much more complex empty line??
+			// ignore empty lines
 			continue
 		}
+
 		instruction := strings.ToUpper(fields[0])
 
 		// TODO balk at ARG / $ in from values
