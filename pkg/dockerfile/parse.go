@@ -16,12 +16,12 @@ type Metadata struct {
 	Froms []string // every "FROM" or "COPY --from=xxx" value (minus named and/or numbered stages in the case of "--from=")
 }
 
-func Parse(dockerfile string) (*Metadata, error) {
+func Parse(dockerfile string) (Metadata, error) {
 	return ParseReader(strings.NewReader(dockerfile))
 }
 
-func ParseReader(dockerfile io.Reader) (*Metadata, error) {
-	meta := &Metadata{
+func ParseReader(dockerfile io.Reader) (Metadata, error) {
+	meta := Metadata{
 		// panic: assignment to entry in nil map
 		StageNameFroms: map[string]string{},
 		// (nil slices work fine)
@@ -171,10 +171,7 @@ func ParseReader(dockerfile io.Reader) (*Metadata, error) {
 			}
 		}
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-	return meta, nil
+	return meta, scanner.Err()
 }
 
 func latestizeRepoTag(repoTag string) string {

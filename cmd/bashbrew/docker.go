@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/docker-library/bashbrew/manifest"
 	"github.com/docker-library/bashbrew/pkg/dockerfile"
@@ -37,27 +38,25 @@ func (r Repo) ArchDockerFroms(arch string, entry *manifest.Manifest2822Entry) ([
 	return dockerfileMeta.Froms, nil
 }
 
-func (r Repo) dockerfileMetadata(entry *manifest.Manifest2822Entry) (*dockerfile.Metadata, error) {
+func (r Repo) dockerfileMetadata(entry *manifest.Manifest2822Entry) (dockerfile.Metadata, error) {
 	return r.archDockerfileMetadata(arch, entry)
 }
 
-var dockerfileMetadataCache = map[string]*dockerfile.Metadata{}
+var (
+	dockerfileMetadataCache   = map[string]dockerfile.Metadata{}
+	scratchDockerfileMetadata = sync.OnceValues(func() (dockerfile.Metadata, error) {
+		return dockerfile.Parse(`FROM scratch`)
+	})
+)
 
-func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822Entry) (*dockerfile.Metadata, error) {
+func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822Entry) (dockerfile.Metadata, error) {
 	if builder := entry.ArchBuilder(arch); builder == "oci-import" {
-		return &dockerfile.Metadata{
-			StageFroms: []string{
-				"scratch",
-			},
-			Froms: []string{
-				"scratch",
-			},
-		}, nil
+		return scratchDockerfileMetadata()
 	}
 
 	commit, err := r.fetchGitRepo(arch, entry)
 	if err != nil {
-		return nil, cli.NewMultiError(fmt.Errorf("failed fetching Git repo for arch %q from entry %q", arch, entry.String()), err)
+		return dockerfile.Metadata{}, cli.NewMultiError(fmt.Errorf("failed fetching Git repo for arch %q from entry %q", arch, entry.String()), err)
 	}
 
 	dockerfileFile := path.Join(entry.ArchDirectory(arch), entry.ArchFile(arch))
@@ -72,12 +71,12 @@ func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822En
 
 	df, err := gitShow(commit, dockerfileFile)
 	if err != nil {
-		return nil, cli.NewMultiError(fmt.Errorf(`failed "git show" for %q from commit %q`, dockerfileFile, commit), err)
+		return dockerfile.Metadata{}, cli.NewMultiError(fmt.Errorf(`failed "git show" for %q from commit %q`, dockerfileFile, commit), err)
 	}
 
 	meta, err := dockerfile.Parse(df)
 	if err != nil {
-		return nil, cli.NewMultiError(fmt.Errorf(`failed parsing Dockerfile metadata for %q from commit %q`, dockerfileFile, commit), err)
+		return dockerfile.Metadata{}, cli.NewMultiError(fmt.Errorf(`failed parsing Dockerfile metadata for %q from commit %q`, dockerfileFile, commit), err)
 	}
 
 	dockerfileMetadataCache[cacheKey] = meta

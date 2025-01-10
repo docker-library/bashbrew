@@ -175,13 +175,8 @@ func TestParse(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			if parsed == nil {
+			if !reflect.DeepEqual(parsed, td.metadata) {
 				t.Fatalf("expected:\n%#v\ngot:\n%#v", td.metadata, parsed)
-			}
-
-			if !reflect.DeepEqual(*parsed, td.metadata) {
-				t.Fatalf("expected:\n%#v\ngot:\n%#v", td.metadata, *parsed)
 			}
 		})
 	}

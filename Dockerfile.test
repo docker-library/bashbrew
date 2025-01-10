@@ -1,4 +1,4 @@
-FROM golang:1.20-bullseye
+FROM golang:1.21-bookworm
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
