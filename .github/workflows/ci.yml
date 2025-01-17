@@ -55,6 +55,14 @@ jobs:
       #    files: coverage.out
       #    fail_ci_if_error: true
       #    verbose: true
+      # in the meantime, upload coverage to GHA
+      - run: docker run --rm -i test go tool cover -html /dev/stdin -o /dev/stdout < coverage.out > coverage.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.*
+          include-hidden-files: true
+          if-no-files-found: error
   dockerfile:
     name: Test Dockerfile
     runs-on: ubuntu-latest

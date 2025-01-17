@@ -1,4 +1,4 @@
-FROM golang:1.20-bullseye AS build
+FROM golang:1.21-bookworm AS build
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 

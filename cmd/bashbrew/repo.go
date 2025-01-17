@@ -6,7 +6,6 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/docker-library/bashbrew/manifest"
 )
@@ -37,13 +36,6 @@ func repos(all bool, args ...string) ([]string, error) {
 	}
 
 	return ret, nil
-}
-
-func latestizeRepoTag(repoTag string) string {
-	if repoTag != "scratch" && strings.IndexRune(repoTag, ':') < 0 {
-		return repoTag + ":latest"
-	}
-	return repoTag
 }
 
 type Repo struct {
