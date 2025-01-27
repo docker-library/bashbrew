@@ -18,6 +18,7 @@ var SupportedArches = map[string]OCIPlatform{
 	"arm32v7":  {OS: "linux", Architecture: "arm", Variant: "v7"},
 	"arm64v8":  {OS: "linux", Architecture: "arm64", Variant: "v8"},
 	"i386":     {OS: "linux", Architecture: "386"},
+	"loong64":  {OS: "linux", Architecture: "loong64"},
 	"mips64le": {OS: "linux", Architecture: "mips64le"},
 	"ppc64le":  {OS: "linux", Architecture: "ppc64le"},
 	"riscv64":  {OS: "linux", Architecture: "riscv64"},
