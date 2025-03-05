@@ -14,7 +14,7 @@ import (
 
 // this example is nice because it has some intentionally dangling symlinks in it that trip things up if they aren't implemented correctly!
 // (see also pkg/tarscrub/git_test.go)
-func ExampleGitVarnish() {
+func Example_gitVarnish() {
 	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:          "https://github.com/varnish/docker-varnish.git",
 		SingleBranch: true,
@@ -46,7 +46,7 @@ func ExampleGitVarnish() {
 // this example is nice because it has a different committer vs author timestamp
 // https://github.com/tianon/docker-bash/commit/eb7e541caccc813d297e77cf4068f89553256673
 // https://github.com/docker-library/official-images/blob/8718b8afb62ff1a001d99bb4f77d95fe352ba187/library/bash
-func ExampleGitBash() {
+func Example_gitBash() {
 	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:          "https://github.com/tianon/docker-bash.git",
 		SingleBranch: true,
