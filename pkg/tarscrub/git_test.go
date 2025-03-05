@@ -12,7 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-func ExampleGitHello() {
+func Example_gitHello() {
 	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:          "https://github.com/docker-library/hello-world.git",
 		SingleBranch: true,
@@ -43,7 +43,7 @@ func ExampleGitHello() {
 
 // this example is nice because it has some intentionally dangling symlinks in it that trip things up if they aren't implemented correctly!
 // (see also pkg/gitfs/tarscrub_test.go)
-func ExampleGitVarnish() {
+func Example_gitVarnish() {
 	repo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
 		URL:          "https://github.com/varnish/docker-varnish.git",
 		SingleBranch: true,
