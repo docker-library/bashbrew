@@ -48,7 +48,7 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 		// (TODO see note above regarding "escape" parser directive)
 		for line[len(line)-1] == '\\' {
 			if !scanner.Scan() {
-				line = line[0:len(line)-1]
+				line = line[0 : len(line)-1]
 				break
 			}
 			// "strings.TrimRightFunc(IsSpace)" because whitespace *after* the escape character is supported and ignored 🙈
@@ -63,7 +63,6 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 			}
 			line = line[0:len(line)-1] + nextLine
 		}
-
 
 		// TODO *technically* a line like "   RUN     echo  hi    " should be parsed as "RUN" "echo  hi" (cut off instruction, then the rest of the line with TrimSpace), but for our needs "strings.Fields" is good enough for now
 
