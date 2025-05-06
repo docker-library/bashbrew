@@ -194,7 +194,7 @@ const (
 	buildxBuilderEnv    = "BUILDX_BUILDER"
 )
 
-func dockerBuildxBuild(tags []string, file string, context io.Reader, platform string) error {
+func dockerBuildxBuild(tags []string, file string, context io.Reader, platform string, sbomGenerator string) error {
 	dockerfileSyntax, ok := os.LookupEnv(dockerfileSyntaxEnv)
 	if !ok {
 		return fmt.Errorf("missing %q", dockerfileSyntaxEnv)
@@ -210,7 +210,10 @@ func dockerBuildxBuild(tags []string, file string, context io.Reader, platform s
 	if buildxBuilder {
 		args = append(args, "--provenance", "mode=max")
 	}
-	if sbomGenerator, ok := os.LookupEnv(sbomGeneratorEnv); ok {
+	if sbomGenerator == "" {
+		sbomGenerator, _ = os.LookupEnv(sbomGeneratorEnv)
+	}
+	if sbomGenerator != "" {
 		if buildxBuilder {
 			args = append(args, "--sbom", "generator="+sbomGenerator)
 		} else {
