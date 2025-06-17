@@ -27,16 +27,17 @@ elif command -v uname > /dev/null && tryArch="$(uname -m)"; then
 fi
 
 case "$arch" in
-	amd64 | x86_64)    found 'amd64'    ;;
-	arm64 | aarch64)   found 'arm64v8'  ;;
-	armel)             found 'arm32v5'  ;;
-	armv6*)            found 'arm32v6'  ;;
-	armv7*)            found 'arm32v7'  ;;
-	i[3456]86 | x86)   found 'i386'     ;;
-	mips64el)          found 'mips64le' ;; # TODO "uname -m" is just "mips64" (which is also "apk --print-arch" on big-endian MIPS) so we ought to disambiguate that somehow
-	ppc64el | ppc64le) found 'ppc64le'  ;;
-	riscv64)           found 'riscv64'  ;;
-	s390x)             found 's390x'    ;;
+	amd64 | x86_64)        found 'amd64'    ;;
+	arm64 | aarch64)       found 'arm64v8'  ;;
+	armel)                 found 'arm32v5'  ;;
+	armv6*)                found 'arm32v6'  ;;
+	armv7*)                found 'arm32v7'  ;;
+	i[3456]86 | x86)       found 'i386'     ;;
+	loong64 | loongarch64) found 'loong64'  ;;
+	mips64el)              found 'mips64le' ;; # TODO "uname -m" is just "mips64" (which is also "apk --print-arch" on big-endian MIPS) so we ought to disambiguate that somehow
+	ppc64el | ppc64le)     found 'ppc64le'  ;;
+	riscv64)               found 'riscv64'  ;;
+	s390x)                 found 's390x'    ;;
 
 	armhf)
 		if [ -s /etc/os-release ] && id="$(grep -Em1 '^ID=[^[:space:]]+$' /etc/os-release)"; then
