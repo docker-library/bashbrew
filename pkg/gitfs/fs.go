@@ -158,6 +158,10 @@ func (f gitFS) statEntry(name string, entry *goGitPlumbingObject.TreeEntry, foll
 	fi.entry = entry
 	fi.name = path.Join(fi.name, name)
 
+	if fi.isSubmodule() {
+		return fi, nil
+	}
+
 	if fi.IsDir() {
 		fi.tree, err = goGitPlumbingObject.GetTree(f.storer, entry.Hash) // see https://github.com/go-git/go-git/blob/v5.11.0/plumbing/object/tree.go#L103
 		if err != nil {
@@ -309,6 +313,16 @@ func (f gitFS) ReadDir(n int) ([]fs.DirEntry, error) {
 		return nil, fmt.Errorf("%q not open (or not a directory)", f.name)
 	}
 	ret := []fs.DirEntry{}
+	if f.isSubmodule() {
+		// https://pkg.go.dev/io/fs#ReadDirFile
+		// "If n > 0, ... At the end of a directory, the error is io.EOF."
+		// "If n <= 0, ... it returns the slice and a nil error."
+		err := io.EOF
+		if n <= 0 {
+			err = nil
+		}
+		return ret, err
+	}
 	for i := 0; n <= 0 || i < n; i++ {
 		name, entry, err := f.walker.Next()
 		if err != nil {
@@ -354,8 +368,16 @@ func (f gitFS) Mode() fs.FileMode {
 		return 0775
 	case goGitPlumbingFileMode.Dir:
 		return 0775 | fs.ModeDir
+	case goGitPlumbingFileMode.Submodule:
+		// TODO handle submodules better / more explicitly ("git archive" presents them as empty directories, so we do too, for now)
+		return 0775 | fs.ModeDir
 	}
 	return 0 | fs.ModeIrregular // TODO what to do for files whose types we don't support? 😬
+}
+
+func (f gitFS) isSubmodule() bool {
+	// TODO handle submodules better / more explicitly ("git archive" presents them as empty directories, so we do too, for now)
+	return f.entry != nil && f.entry.Mode == goGitPlumbingFileMode.Submodule
 }
 
 // https://pkg.go.dev/io/fs#FileInfo: modification time
