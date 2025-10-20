@@ -56,7 +56,7 @@ func TestFetchErrors(t *testing.T) {
 	}
 	t.Logf("correct, expected error: %s", err)
 
-	repoName, tagName, _, err = manifest.Fetch("/dev/null", "https://example.com:1.2.3")
+	repoName, tagName, _, err = manifest.Fetch("/dev/null", "https://docker.com:1.2.3")
 	if err == nil {
 		t.Fatalf("expected parse error, got repoName=%q, tagName=%q instead", repoName, tagName)
 	}
