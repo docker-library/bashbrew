@@ -21,6 +21,7 @@ ENV BASHBREW_ARCHES \
 		arm64v8 \
 		darwin-amd64 \
 		i386 \
+		loong64 \
 		mips64le \
 		ppc64le \
 		riscv64 \
@@ -41,7 +42,9 @@ RUN export GNUPGHOME="$(mktemp -d)"; \
 	\
 	for bashbrewArch in $BASHBREW_ARCHES; do \
 # TODO convince estesp to release riscv64 binaries (https://github.com/estesp/manifest-tool/pull/113 👀)
+# also https://github.com/estesp/manifest-tool/pull/274 for loong64 support
 		if [ "$bashbrewArch" = 'riscv64' ]; then continue; fi; \
+		if [ "$bashbrewArch" = 'loong64' ]; then continue; fi; \
 		( \
 			goEnv="$(bashbrew-arch-to-goenv.sh "$bashbrewArch")"; eval "$goEnv"; \
 			srcBin="manifest-tool-$GOOS-$GOARCH"; \
