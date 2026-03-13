@@ -83,7 +83,7 @@ func cmdCat(c *cli.Context) error {
 		"archNamespace": func(arch string) string {
 			return archNamespaces[arch]
 		},
-		"archFilter": func(arch string, entriesArg ...interface{}) []manifest.Manifest2822Entry {
+		"archFilter": func(arch string, entriesArg ...any) []manifest.Manifest2822Entry {
 			if len(entriesArg) < 1 {
 				panic(`"archFilter" requires at least one argument`)
 			}

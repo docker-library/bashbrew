@@ -59,7 +59,7 @@ func Example_ternary() {
 		{{- end -}}
 	`)
 
-	err = tmpl.Execute(os.Stdout, []interface{}{
+	err = tmpl.Execute(os.Stdout, []any{
 		true,
 		false,
 		"true",
@@ -93,7 +93,7 @@ func Example_ternary() {
 func Example_firstLast() {
 	tmpl, err := template.New("first-and-last").Funcs(templatelib.FuncMap).Parse(`First: {{ . | first }}, Last: {{ . | last }}`)
 
-	err = tmpl.Execute(os.Stdout, []interface{}{
+	err = tmpl.Execute(os.Stdout, []any{
 		"a",
 		"b",
 		"c",
@@ -111,7 +111,7 @@ func Example_json() {
 		{{- json . -}}
 	`)
 
-	err = tmpl.Execute(os.Stdout, map[string]interface{}{
+	err = tmpl.Execute(os.Stdout, map[string]any{
 		"a": []string{"1", "2", "3"},
 		"b": map[string]bool{"1": true, "2": false, "3": true},
 		"c": nil,

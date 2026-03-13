@@ -16,7 +16,7 @@ import (
 var errPutShared404 = fmt.Errorf("nothing to push")
 
 func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Manifest2822Entry) (string, []string, error) {
-	yaml := ""
+	var yaml strings.Builder
 	remoteDigests := []string{}
 	entryIdentifiers := []string{}
 	for _, entry := range entries {
@@ -52,33 +52,34 @@ func entriesToManifestToolYaml(singleArch bool, r Repo, entries ...*manifest.Man
 			}
 			remoteDigests = append(remoteDigests, archImageDigests...)
 
-			yaml += fmt.Sprintf("  - image: %s\n", archImage)
-			yaml += fmt.Sprintf("    platform:\n")
-			yaml += fmt.Sprintf("      os: %s\n", ociArch.OS)
-			yaml += fmt.Sprintf("      architecture: %s\n", ociArch.Architecture)
+			fmt.Fprintf(&yaml, "  - image: %s\n", archImage)
+			fmt.Fprintf(&yaml, "    platform:\n")
+			fmt.Fprintf(&yaml, "      os: %s\n", ociArch.OS)
+			fmt.Fprintf(&yaml, "      architecture: %s\n", ociArch.Architecture)
 			if ociArch.Variant != "" {
-				yaml += fmt.Sprintf("      variant: %s\n", ociArch.Variant)
+				fmt.Fprintf(&yaml, "      variant: %s\n", ociArch.Variant)
 			}
 		}
 	}
 
-	if yaml == "" {
+	if yaml.Len() == 0 {
 		// we're not even going to try pushing something, so let's inform the caller of that to skip the unnecessary call to "manifest-tool"
 		return "", nil, errPutShared404
 	}
 
-	return "manifests:\n" + yaml, remoteDigests, nil
+	return "manifests:\n" + yaml.String(), remoteDigests, nil
 }
 
 func tagsToManifestToolYaml(repo string, tags ...string) string {
-	yaml := fmt.Sprintf("image: %s:%s\n", repo, tags[0])
+	var yaml strings.Builder
+	fmt.Fprintf(&yaml, "image: %s:%s\n", repo, tags[0])
 	if len(tags) > 1 {
-		yaml += "tags:\n"
+		yaml.WriteString("tags:\n")
 		for _, tag := range tags[1:] {
-			yaml += fmt.Sprintf("  - %s\n", tag)
+			fmt.Fprintf(&yaml, "  - %s\n", tag)
 		}
 	}
-	return yaml
+	return yaml.String()
 }
 
 func cmdPutShared(c *cli.Context) error {

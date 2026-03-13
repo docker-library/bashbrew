@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -152,7 +153,7 @@ func cmdChildren(c *cli.Context) error {
 					for _, kid := range kids {
 						supported := false
 						for _, arch := range arches.slice(kid) {
-							if sliceHas[string](supportedArches, arch) {
+							if slices.Contains(supportedArches, arch) {
 								supported = true
 								break
 							}

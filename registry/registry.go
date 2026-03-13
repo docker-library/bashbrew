@@ -27,7 +27,7 @@ type ResolvedObject struct {
 	fetcher  remotes.Fetcher
 }
 
-func (obj ResolvedObject) fetchJSON(ctx context.Context, v interface{}) error {
+func (obj ResolvedObject) fetchJSON(ctx context.Context, v any) error {
 	// prevent go-digest panics later
 	if err := obj.Desc.Digest.Validate(); err != nil {
 		return err

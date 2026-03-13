@@ -28,7 +28,7 @@ import (
 )
 
 // given a reader and an interface to read it into, do the JSON decoder dance
-func readJSON(r io.Reader, v interface{}) error {
+func readJSON(r io.Reader, v any) error {
 	decoder := json.NewDecoder(r)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&v); err != nil {
@@ -42,7 +42,7 @@ func readJSON(r io.Reader, v interface{}) error {
 }
 
 // given an io/fs, a file reference, and an interface to read it into, read a JSON blob from the io/fs
-func readJSONFile(fs iofs.FS, file string, v interface{}) error {
+func readJSONFile(fs iofs.FS, file string, v any) error {
 	f, err := fs.Open(file)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func readJSONFile(fs iofs.FS, file string, v interface{}) error {
 }
 
 // given a containerd content store and an OCI descriptor, parse the JSON blob
-func readContentJSON(ctx context.Context, cs content.Provider, desc imagespec.Descriptor, v interface{}) error {
+func readContentJSON(ctx context.Context, cs content.Provider, desc imagespec.Descriptor, v any) error {
 	ra, err := cs.ReaderAt(ctx, desc)
 	if err != nil {
 		return err

@@ -17,13 +17,13 @@ func swapStringsFuncBoolArgsOrder(a func(string, string) bool) func(string, stri
 	}
 }
 
-func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}, interface{}) interface{}) func(args ...interface{}) interface{} {
-	return func(args ...interface{}) interface{} {
+func thingsActionFactory(name string, actOnFirst bool, action func([]any, any) any) func(args ...any) any {
+	return func(args ...any) any {
 		if len(args) < 1 {
 			panic(fmt.Sprintf(`%q requires at least one argument`, name))
 		}
 
-		actArgs := []interface{}{}
+		actArgs := []any{}
 		for _, val := range args {
 			v := reflect.ValueOf(val)
 
@@ -37,7 +37,7 @@ func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}
 			}
 		}
 
-		var arg interface{}
+		var arg any
 		if actOnFirst {
 			arg = actArgs[0]
 			actArgs = actArgs[1:]
@@ -50,8 +50,8 @@ func thingsActionFactory(name string, actOnFirst bool, action func([]interface{}
 	}
 }
 
-func stringsActionFactory(name string, actOnFirst bool, action func([]string, string) string) func(args ...interface{}) interface{} {
-	return thingsActionFactory(name, actOnFirst, func(args []interface{}, arg interface{}) interface{} {
+func stringsActionFactory(name string, actOnFirst bool, action func([]string, string) string) func(args ...any) any {
+	return thingsActionFactory(name, actOnFirst, func(args []any, arg any) any {
 		str := arg.(string)
 		strs := []string{}
 		for _, val := range args {
@@ -79,7 +79,7 @@ var FuncMap = template.FuncMap{
 	// {{- $hugeIfTrue := .SomeValue | ternary "HUGE" "not so huge" -}}
 	// if .SomeValue is truthy, $hugeIfTrue will be "HUGE"
 	// (otherwise, "not so huge")
-	"ternary": func(truthy interface{}, falsey interface{}, val interface{}) interface{} {
+	"ternary": func(truthy any, falsey any, val any) any {
 		if t, ok := template.IsTrue(val); !ok {
 			panic(fmt.Sprintf(`template.IsTrue(%+v) says things are NOT OK`, val))
 		} else if t {
@@ -91,13 +91,13 @@ var FuncMap = template.FuncMap{
 
 	// First Tag: {{- .Tags | first -}}
 	// Last Tag:  {{- .Tags | last -}}
-	"first": thingsActionFactory("first", true, func(args []interface{}, arg interface{}) interface{} { return arg }),
-	"last":  thingsActionFactory("last", false, func(args []interface{}, arg interface{}) interface{} { return arg }),
+	"first": thingsActionFactory("first", true, func(args []any, arg any) any { return arg }),
+	"last":  thingsActionFactory("last", false, func(args []any, arg any) any { return arg }),
 
 	// JSON data dump: {{ json . }}
 	// (especially nice for taking data and piping it to "jq")
 	// (ie "some-tool inspect --format '{{ json . }}' some-things | jq .")
-	"json": func(v interface{}) (string, error) {
+	"json": func(v any) (string, error) {
 		j, err := json.Marshal(v)
 		return string(j), err
 	},
@@ -118,11 +118,11 @@ var FuncMap = template.FuncMap{
 	// {{- getenv "PATH" -}}
 	// {{- getenv "HOME" "no HOME set" -}}
 	// {{- getenv "HOME" "is set" "is NOT set (or is empty)" -}}
-	"getenv": thingsActionFactory("getenv", true, func(args []interface{}, arg interface{}) interface{} {
+	"getenv": thingsActionFactory("getenv", true, func(args []any, arg any) any {
 		var (
-			val                  = os.Getenv(arg.(string))
-			setVal   interface{} = val
-			unsetVal interface{} = ""
+			val          = os.Getenv(arg.(string))
+			setVal   any = val
+			unsetVal any = ""
 		)
 		if len(args) == 2 {
 			setVal, unsetVal = args[0], args[1]

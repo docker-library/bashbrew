@@ -1,20 +1,13 @@
 package main
 
-func sliceHas[T comparable](s []T, t T) bool {
-	for _, i := range s {
-		if i == t {
-			return true
-		}
-	}
-	return false
-}
+import "slices"
 
 type dedupeSlice[T comparable] struct {
 	s []T
 }
 
 func (s *dedupeSlice[T]) add(i T) bool {
-	if sliceHas[T](s.s, i) {
+	if slices.Contains(s.s, i) {
 		return false
 	}
 	s.s = append(s.s, i)

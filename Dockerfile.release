@@ -1,4 +1,4 @@
-FROM golang:1.23-bookworm
+FROM golang:1.24-trixie
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
@@ -8,7 +8,7 @@ RUN apt-get update; \
 		gnupg \
 		wget \
 	; \
-	rm -rf /var/lib/apt/lists/*
+	apt-get dist-clean
 
 WORKDIR /usr/src/bashbrew
 ENV CGO_ENABLED 0

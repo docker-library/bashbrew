@@ -22,7 +22,7 @@ jobs:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: ./ # test our "action.yml" 👀
       - name: Smoke Test
         run: |
@@ -41,7 +41,7 @@ jobs:
     name: Go Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Go Test
         run: |
           docker build --pull --file Dockerfile.test --tag test .
@@ -65,7 +65,7 @@ jobs:
     name: Test Dockerfile
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build Dockerfile
         run: |
           docker build --pull .
@@ -73,7 +73,7 @@ jobs:
     name: Test Dockerfile.release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Build Dockerfile.release
         run: |
           docker build --pull --file Dockerfile.release .
