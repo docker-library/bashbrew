@@ -1,4 +1,4 @@
-FROM golang:1.23-bookworm AS build
+FROM golang:1.24-trixie AS build
 
 SHELL ["bash", "-Eeuo", "pipefail", "-xc"]
 
@@ -20,7 +20,7 @@ RUN apt-get update; \
 	apt-get install -y --no-install-recommends \
 		git \
 	; \
-	rm -rf /var/lib/apt/lists/*
+	apt-get dist-clean
 
 COPY --from=build /bashbrew /usr/local/bin/
 RUN bashbrew --version

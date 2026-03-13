@@ -159,7 +159,6 @@ func TestParse(t *testing.T) {
 			},
 		},
 	} {
-		td := td
 		// some light normalization
 		if td.name == "" {
 			td.name = td.dockerfile

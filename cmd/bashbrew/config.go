@@ -76,8 +76,8 @@ func (dst *FlagsConfigEntry) Apply(src FlagsConfigEntry) {
 	}
 }
 
-func (config FlagsConfigEntry) Vars() map[string]map[string]interface{} {
-	return map[string]map[string]interface{}{
+func (config FlagsConfigEntry) Vars() map[string]map[string]any {
+	return map[string]map[string]any{
 		"global": {
 			"library": config.Library,
 			"cache":   config.Cache,
@@ -160,7 +160,7 @@ func (config FlagsConfig) ApplyTo(cmd string, c *cli.Context) error {
 
 // https://github.com/urfave/cli/blob/73aa67b7a20db7514b1c086866469c49bc93a569/altsrc/flag.go#L237-L251
 func isEnvVarSet(envVars string) bool {
-	for _, envVar := range strings.Split(envVars, ",") {
+	for envVar := range strings.SplitSeq(envVars, ",") {
 		envVar = strings.TrimSpace(envVar)
 		if envVal := os.Getenv(envVar); envVal != "" {
 			// TODO: Can't use this for bools as

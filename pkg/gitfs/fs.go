@@ -391,7 +391,7 @@ func (f gitFS) IsDir() bool {
 }
 
 // https://pkg.go.dev/io/fs#FileInfo: underlying data source (can return nil)
-func (f gitFS) Sys() interface{} {
+func (f gitFS) Sys() any {
 	return nil
 }
 

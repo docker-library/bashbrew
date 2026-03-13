@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"maps"
 	"path"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -72,14 +74,6 @@ var (
 	}
 )
 
-func deepCopyStringsMap(a map[string]string) map[string]string {
-	b := map[string]string{}
-	for k, v := range a {
-		b[k] = v
-	}
-	return b
-}
-
 func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	// SLICES! grr
 	entry.Maintainers = append([]Manifest2822Maintainer{}, entry.Maintainers...)
@@ -88,11 +82,14 @@ func (entry Manifest2822Entry) Clone() Manifest2822Entry {
 	entry.Architectures = append([]string{}, entry.Architectures...)
 	entry.Constraints = append([]string{}, entry.Constraints...)
 	// and MAPS, oh my
-	entry.ArchValues = deepCopyStringsMap(entry.ArchValues)
+	entry.ArchValues = maps.Clone(entry.ArchValues)
 	return entry
 }
 
 func (entry *Manifest2822Entry) SeedArchValues() {
+	if entry.ArchValues == nil {
+		entry.ArchValues = map[string]string{}
+	}
 	for field, val := range entry.Paragraph.Values {
 		if strings.HasSuffix(field, "-GitRepo") || strings.HasSuffix(field, "-GitFetch") || strings.HasSuffix(field, "-GitCommit") || strings.HasSuffix(field, "-Directory") || strings.HasSuffix(field, "-File") || strings.HasSuffix(field, "-Builder") {
 			entry.ArchValues[field] = val
@@ -101,6 +98,9 @@ func (entry *Manifest2822Entry) SeedArchValues() {
 }
 func (entry *Manifest2822Entry) CleanDirectoryValues() {
 	entry.Directory = path.Clean(entry.Directory)
+	if entry.ArchValues == nil {
+		entry.ArchValues = map[string]string{}
+	}
 	for field, val := range entry.ArchValues {
 		if strings.HasSuffix(field, "-Directory") && val != "" {
 			entry.ArchValues[field] = path.Clean(val)
@@ -315,32 +315,17 @@ func (entry Manifest2822Entry) ArchBuilder(arch string) string {
 }
 
 func (entry Manifest2822Entry) HasTag(tag string) bool {
-	for _, existingTag := range entry.Tags {
-		if tag == existingTag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(entry.Tags, tag)
 }
 
 // HasSharedTag returns true if the given tag exists in entry.SharedTags.
 func (entry Manifest2822Entry) HasSharedTag(tag string) bool {
-	for _, existingTag := range entry.SharedTags {
-		if tag == existingTag {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(entry.SharedTags, tag)
 }
 
 // HasArchitecture returns true if the given architecture exists in entry.Architectures
 func (entry Manifest2822Entry) HasArchitecture(arch string) bool {
-	for _, existingArch := range entry.Architectures {
-		if arch == existingArch {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(entry.Architectures, arch)
 }
 
 func (manifest Manifest2822) GetTag(tag string) *Manifest2822Entry {
@@ -400,7 +385,7 @@ func (manifest Manifest2822) GetSharedTagGroups() []SharedTagGroup {
 			SharedTags: inter[tags],
 			Entries:    []*Manifest2822Entry{},
 		}
-		for _, tag := range strings.Split(tags, interKeySep) {
+		for tag := range strings.SplitSeq(tags, interKeySep) {
 			group.Entries = append(group.Entries, manifest.GetTag(tag))
 		}
 		ret = append(ret, group)
