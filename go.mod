@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/containerd/containerd v1.6.19
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221013174636-8159c8264e2e
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli v1.22.10
