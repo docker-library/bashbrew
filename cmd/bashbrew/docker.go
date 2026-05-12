@@ -54,7 +54,7 @@ func (r Repo) archDockerfileMetadata(arch string, entry *manifest.Manifest2822En
 		return scratchDockerfileMetadata()
 	}
 
-	commit, err := r.fetchGitRepo(arch, entry)
+	commit, err := r.fetchGitRepo(arch, entry, auth)
 	if err != nil {
 		return dockerfile.Metadata{}, cli.NewMultiError(fmt.Errorf("failed fetching Git repo for arch %q from entry %q", arch, entry.String()), err)
 	}

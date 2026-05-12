@@ -36,7 +36,7 @@ func cmdFetch(c *cli.Context) error {
 			}
 
 			for _, entryArch := range arches {
-				commit, err := r.fetchGitRepo(entryArch, entry)
+				commit, err := r.fetchGitRepo(entryArch, entry, auth)
 				if err != nil {
 					return cli.NewMultiError(fmt.Errorf(`failed fetching git repo for %q (tags %q on arch %q)`, r.RepoName, entry.TagsString(), entryArch), err)
 				}
