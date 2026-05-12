@@ -22,6 +22,8 @@ import (
 	goGit "github.com/go-git/go-git/v5"
 	goGitConfig "github.com/go-git/go-git/v5/config"
 	goGitPlumbing "github.com/go-git/go-git/v5/plumbing"
+
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 func gitCache() string {
@@ -97,8 +99,8 @@ func getGitCommit(commit string) (string, error) {
 	return h.String(), nil
 }
 
-func (r Repo) archGitFS(arch string, entry *manifest.Manifest2822Entry) (fs.FS, error) {
-	commit, err := r.fetchGitRepo(arch, entry)
+func (r Repo) archGitFS(arch string, entry *manifest.Manifest2822Entry, auth http.AuthMethod) (fs.FS, error) {
+	commit, err := r.fetchGitRepo(arch, entry, auth)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching %q: %w", r.EntryIdentifier(entry), err)
 	}
@@ -112,8 +114,8 @@ func (r Repo) archGitFS(arch string, entry *manifest.Manifest2822Entry) (fs.FS, 
 }
 
 // returns the timestamp of the ArchGitCommit -- useful for SOURCE_DATE_EPOCH
-func (r Repo) ArchGitTime(arch string, entry *manifest.Manifest2822Entry) (time.Time, error) {
-	f, err := r.archGitFS(arch, entry)
+func (r Repo) ArchGitTime(arch string, entry *manifest.Manifest2822Entry, auth http.AuthMethod) (time.Time, error) {
+	f, err := r.archGitFS(arch, entry, auth)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -194,7 +196,7 @@ func gitNormalizeForTagUsage(text string) string {
 
 var gitRepoCache = map[string]string{}
 
-func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (string, error) {
+func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry, auth http.AuthMethod) (string, error) {
 	cacheKey := strings.Join([]string{
 		entry.ArchGitRepo(arch),
 		entry.ArchGitFetch(arch),
@@ -280,6 +282,7 @@ func (r Repo) fetchGitRepo(arch string, entry *manifest.Manifest2822Entry) (stri
 		err := gitRemote.Fetch(&goGit.FetchOptions{
 			RefSpecs: []goGitConfig.RefSpec{goGitConfig.RefSpec(fetchString)},
 			Tags:     goGit.NoTags,
+			Auth:     auth,
 
 			//Progress: os.Stdout,
 		})

@@ -13,6 +13,8 @@ import (
 
 	"github.com/docker-library/bashbrew/architecture"
 	"github.com/docker-library/bashbrew/manifest"
+
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
 // TODO somewhere, ensure that the Docker engine we're talking to is API version 1.22+ (Docker 1.10+)
@@ -36,6 +38,10 @@ var (
 	debugFlag  = false
 	noSortFlag = false
 
+	gitUsername string
+	gitPassword string
+	auth        http.AuthMethod
+
 	// separated so that FlagsConfig.ApplyTo can access them
 	flagEnvVars = map[string]string{
 		"debug":     "BASHBREW_DEBUG",
@@ -48,6 +54,9 @@ var (
 
 		"constraint":     "BASHBREW_CONSTRAINTS",
 		"arch-namespace": "BASHBREW_ARCH_NAMESPACES",
+
+		"git-username": "BASHBREW_GIT_USERNAME",
+		"git-password": "BASHBREW_GIT_PASSWORD",
 	}
 )
 
@@ -138,6 +147,18 @@ func main() {
 			EnvVar: flagEnvVars["cache"],
 			Usage:  "where the git wizardry is stashed",
 		},
+		cli.StringFlag{
+			Name:   "git-username",
+			Value:  "",
+			EnvVar: flagEnvVars["git-username"],
+			Usage:  "access the git repository as this user",
+		},
+		cli.StringFlag{
+			Name:   "git-password",
+			Value:  "",
+			EnvVar: flagEnvVars["git-password"],
+			Usage:  "authenticate access to the Git repository with this password or token",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
@@ -177,6 +198,15 @@ func main() {
 			namespace = c.GlobalString("namespace")
 			constraints = c.GlobalStringSlice("constraint")
 			exclusiveConstraints = c.GlobalBool("exclusive-constraints")
+			gitUsername = c.GlobalString("git-username")
+			gitPassword = c.GlobalString("git-password")
+
+			if gitUsername != "" && gitPassword != "" {
+				auth = &http.BasicAuth{
+					Username: gitUsername,
+					Password: gitPassword,
+				}
+			}
 
 			if arch == "" {
 				// weird edge case... ("BASHBREW_ARCH=")
@@ -462,7 +492,7 @@ func main() {
 				}
 
 				if c.Bool("sha256") {
-					sum, err := r.ArchGitChecksum(arch, r.TagEntry)
+					sum, err := r.ArchGitChecksum(arch, r.TagEntry, auth)
 					if err != nil {
 						return err
 					}
@@ -472,7 +502,7 @@ func main() {
 					if xTerm.IsTerminal(int(os.Stdout.Fd())) {
 						return fmt.Errorf("cowardly refusing to output a tar to a terminal")
 					}
-					return r.archContextTar(arch, r.TagEntry, os.Stdout)
+					return r.archContextTar(arch, r.TagEntry, auth, os.Stdout)
 				}
 			},
 
