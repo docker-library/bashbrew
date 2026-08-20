@@ -19,11 +19,16 @@ import (
 
 // this returns the "FROM" value for the last stage (which essentially determines the "base" for the final published image)
 func (r Repo) ArchLastStageFrom(arch string, entry *manifest.Manifest2822Entry) (string, error) {
-	dockerfileMeta, err := r.archDockerfileMetadata(arch, entry)
+	parents, err := r.ArchDockerfileParents(arch, entry)
 	if err != nil {
 		return "", err
 	}
-	return dockerfileMeta.StageFroms[len(dockerfileMeta.StageFroms)-1], nil
+	for i := len(parents) - 1; i >= 0; i-- {
+		if parents[i].Kind == "FROM" {
+			return parents[i].From, nil
+		}
+	}
+	return "", fmt.Errorf("no FROM found for arch %q from entry %q", arch, entry.String())
 }
 
 func (r Repo) DockerFroms(entry *manifest.Manifest2822Entry) ([]string, error) {
@@ -36,6 +41,15 @@ func (r Repo) ArchDockerFroms(arch string, entry *manifest.Manifest2822Entry) ([
 		return nil, err
 	}
 	return dockerfileMeta.Froms, nil
+}
+
+// exposes every parent reference (both "FROM" and external "COPY --from="/"RUN --mount=...,from=") tagged with "Kind" and (for "FROM") "Platform", so callers can decide for themselves which are build-pinned vs target-pinned, instead of bashbrew choosing one slice to hand back and leaving the complement as a set-subtraction exercise
+func (r Repo) ArchDockerfileParents(arch string, entry *manifest.Manifest2822Entry) ([]dockerfile.Parent, error) {
+	dockerfileMeta, err := r.archDockerfileMetadata(arch, entry)
+	if err != nil {
+		return nil, err
+	}
+	return dockerfileMeta.Parents, nil
 }
 
 func (r Repo) dockerfileMetadata(entry *manifest.Manifest2822Entry) (dockerfile.Metadata, error) {

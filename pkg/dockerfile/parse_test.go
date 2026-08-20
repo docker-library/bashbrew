@@ -12,23 +12,27 @@ func TestParse(t *testing.T) {
 		name       string
 		dockerfile string
 		metadata   dockerfile.Metadata
+		wantErr    bool
 	}{
 		{
 			dockerfile: `FROM scratch`,
 			metadata: dockerfile.Metadata{
-				Froms: []string{"scratch"},
+				Froms:   []string{"scratch"},
+				Parents: []dockerfile.Parent{{From: "scratch", Kind: "FROM"}},
 			},
 		},
 		{
 			dockerfile: `from bash`,
 			metadata: dockerfile.Metadata{
-				Froms: []string{"bash:latest"},
+				Froms:   []string{"bash:latest"},
+				Parents: []dockerfile.Parent{{From: "bash:latest", Kind: "FROM"}},
 			},
 		},
 		{
 			dockerfile: `fRoM bash:5`,
 			metadata: dockerfile.Metadata{
-				Froms: []string{"bash:5"},
+				Froms:   []string{"bash:5"},
+				Parents: []dockerfile.Parent{{From: "bash:5", Kind: "FROM"}},
 			},
 		},
 		{
@@ -48,6 +52,10 @@ func TestParse(t *testing.T) {
 			`,
 			metadata: dockerfile.Metadata{
 				Froms: []string{"scratch", "bash:latest"},
+				Parents: []dockerfile.Parent{
+					{From: "scratch", Kind: "FROM"},
+					{From: "bash:latest", Kind: "FROM"},
+				},
 			},
 		},
 		{
@@ -63,16 +71,21 @@ func TestParse(t *testing.T) {
 				COPY --from=bar / /
 				COPY --from=foo2 / /
 				COPY --chown=1234:5678 /foo /bar
+				COPY --from=hello-world /hello /usr/local/bin/
 			`,
 			metadata: dockerfile.Metadata{
-				StageFroms: []string{"bash:latest", "busybox:uclibc", "bash:5", "bash:latest", "scratch"},
-				StageNames: []string{"foo", "bar", "foo2"},
-				StageNameFroms: map[string]string{
-					"foo":  "bash:latest",
-					"bar":  "bash:5",
-					"foo2": "bash:latest",
+				Froms: []string{"bash:latest", "busybox:uclibc", "bash:5", "bash:latest", "scratch", "bash:latest", "bash:5", "bash:latest", "hello-world:latest"},
+				Parents: []dockerfile.Parent{
+					// one per FROM (including "foo2", resolved to "foo"'s underlying image)
+					{From: "bash:latest", Kind: "FROM"},
+					{From: "busybox:uclibc", Kind: "FROM"},
+					{From: "bash:5", Kind: "FROM"},
+					{From: "bash:latest", Kind: "FROM"},
+					{From: "scratch", Kind: "FROM"},
+					// COPY --from=foo/bar/foo2 all reference local stages, already represented above -- no Parent
+					// COPY --chown=... has no --from= at all
+					{From: "hello-world:latest", Kind: "COPY"},
 				},
-				Froms: []string{"bash:latest", "busybox:uclibc", "bash:5", "bash:latest", "scratch", "bash:latest", "bash:5", "bash:latest"},
 			},
 		},
 		{
@@ -111,6 +124,10 @@ func TestParse(t *testing.T) {
 			`,
 			metadata: dockerfile.Metadata{
 				Froms: []string{"scratch", "scratch"},
+				Parents: []dockerfile.Parent{
+					{From: "scratch", Kind: "FROM"},
+					{From: "scratch", Kind: "FROM"},
+				},
 			},
 		},
 		{
@@ -127,8 +144,14 @@ func TestParse(t *testing.T) {
 				RUN --mount=type=bind,from=2 cat /foo
 			`,
 			metadata: dockerfile.Metadata{
-				StageFroms: []string{"bash:latest", "scratch", "scratch", "bash:latest"},
-				Froms:      []string{"bash:latest", "scratch", "bash:latest", "scratch", "scratch", "bash:latest", "scratch"},
+				Froms: []string{"bash:latest", "scratch", "bash:latest", "scratch", "scratch", "bash:latest", "scratch"},
+				Parents: []dockerfile.Parent{
+					// COPY/RUN --from=<number> all reference local stages, already represented here -- no separate Parent
+					{From: "bash:latest", Kind: "FROM"},
+					{From: "scratch", Kind: "FROM"},
+					{From: "scratch", Kind: "FROM"},
+					{From: "bash:latest", Kind: "FROM"},
+				},
 			},
 		},
 		{
@@ -138,8 +161,11 @@ func TestParse(t *testing.T) {
 				RUN --mount=type=bind,from=busybox:uclibc,target=/tmp ["/tmp/bin/sh","-euxc","echo foo > /foo"]
 			`,
 			metadata: dockerfile.Metadata{
-				StageFroms: []string{"scratch"},
-				Froms:      []string{"scratch", "busybox:uclibc"},
+				Froms: []string{"scratch", "busybox:uclibc"},
+				Parents: []dockerfile.Parent{
+					{From: "scratch", Kind: "FROM"},
+					{From: "busybox:uclibc", Kind: "RUN"},
+				},
 			},
 		},
 		{
@@ -152,25 +178,53 @@ func TestParse(t *testing.T) {
 				RUN --mount=type=bind,from=bb,target=/tmp ["/tmp/bin/sh","-euxc","echo foo > /foo"]
 			`,
 			metadata: dockerfile.Metadata{
-				StageFroms:     []string{"busybox:uclibc", "scratch"},
-				StageNames:     []string{"bb"},
-				StageNameFroms: map[string]string{"bb": "busybox:uclibc"},
-				Froms:          []string{"busybox:uclibc", "scratch", "busybox:uclibc"},
+				Froms: []string{"busybox:uclibc", "scratch", "busybox:uclibc"},
+				Parents: []dockerfile.Parent{
+					// RUN --mount=...,from=bb references a local stage, already represented here -- no separate Parent
+					{From: "busybox:uclibc", Kind: "FROM"},
+					{From: "scratch", Kind: "FROM"},
+				},
 			},
+		},
+		{
+			name: "FROM --platform",
+			dockerfile: `
+				FROM --platform=$BUILDPLATFORM golang AS build
+				RUN do some stuff
+				FROM --platform=$TARGETPLATFORM debian
+				COPY --from=build /some/binary /some/other/place
+			`,
+			metadata: dockerfile.Metadata{
+				Froms: []string{"golang:latest", "debian:latest", "golang:latest"},
+				Parents: []dockerfile.Parent{
+					{From: "golang:latest", Platform: "$BUILDPLATFORM", Kind: "FROM"},
+					// explicit "$TARGETPLATFORM" is normalized to "" -- semantically identical, no reason to make callers treat two values as equivalent
+					{From: "debian:latest", Kind: "FROM"},
+					// COPY --from=build references a local stage, already represented above -- no separate Parent
+				},
+			},
+		},
+		{
+			name: "FROM --platform mismatch with referenced stage",
+			dockerfile: `
+				FROM --platform=$BUILDPLATFORM golang AS build
+				FROM --platform=$TARGETPLATFORM build
+			`,
+			wantErr: true,
 		},
 	} {
 		// some light normalization
 		if td.name == "" {
 			td.name = td.dockerfile
 		}
-		if len(td.metadata.Froms) > 0 && len(td.metadata.StageFroms) == 0 {
-			td.metadata.StageFroms = td.metadata.Froms
-		}
-		if td.metadata.StageNameFroms == nil {
-			td.metadata.StageNameFroms = map[string]string{}
-		}
 		t.Run(td.name, func(t *testing.T) {
 			parsed, err := dockerfile.Parse(td.dockerfile)
+			if td.wantErr {
+				if err == nil {
+					t.Fatalf("expected an error, got:\n%#v", parsed)
+				}
+				return
+			}
 			if err != nil {
 				t.Fatal(err)
 			}
