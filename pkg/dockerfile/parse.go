@@ -174,7 +174,10 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 }
 
 func latestizeRepoTag(repoTag string) string {
-	if repoTag != "scratch" && strings.IndexRune(repoTag, ':') < 0 {
+	if repoTag == "scratch" || strings.Contains(repoTag, "@") {
+		return repoTag
+	}
+	if strings.LastIndexByte(repoTag, ':') <= strings.LastIndexByte(repoTag, '/') {
 		return repoTag + ":latest"
 	}
 	return repoTag

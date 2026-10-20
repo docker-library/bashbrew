@@ -32,6 +32,27 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name:       "untagged image from registry with port",
+			dockerfile: `FROM registry.example:5000/team/base`,
+			metadata: dockerfile.Metadata{
+				Froms: []string{"registry.example:5000/team/base:latest"},
+			},
+		},
+		{
+			name:       "tagged image from registry with port",
+			dockerfile: `FROM registry.example:5000/team/base:3`,
+			metadata: dockerfile.Metadata{
+				Froms: []string{"registry.example:5000/team/base:3"},
+			},
+		},
+		{
+			name:       "digest image from registry with port",
+			dockerfile: `FROM registry.example:5000/team/base@sha256:123456`,
+			metadata: dockerfile.Metadata{
+				Froms: []string{"registry.example:5000/team/base@sha256:123456"},
+			},
+		},
+		{
 			name: "comments+whitespace+continuation",
 			dockerfile: `
 				FROM scratch
