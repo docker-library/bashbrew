@@ -102,7 +102,7 @@ func cmdChildren(c *cli.Context) error {
 						arches.add(from, entryArch)
 					}
 					children.add(from, tag)
-					if fromRepo, _, ok := strings.Cut(from, ":"); ok {
+					if fromRepo, ok := repositoryFromImageReference(from); ok {
 						// make sure things like old "alpine" tags that are no longer supported still come up with "bashbrew children alpine"
 						repoTags.add(fromRepo, from)
 					}
@@ -177,4 +177,15 @@ func cmdChildren(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func repositoryFromImageReference(reference string) (string, bool) {
+	repository := reference
+	if digest := strings.IndexByte(repository, '@'); digest >= 0 {
+		repository = repository[:digest]
+	}
+	if tag := strings.LastIndexByte(repository, ':'); tag > strings.LastIndexByte(repository, '/') {
+		repository = repository[:tag]
+	}
+	return repository, repository != reference
 }
