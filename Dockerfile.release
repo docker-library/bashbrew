@@ -20,6 +20,7 @@ ENV BASHBREW_ARCHES \
 		arm32v7 \
 		arm64v8 \
 		darwin-amd64 \
+		darwin-arm64 \
 		i386 \
 		mips64le \
 		ppc64le \
