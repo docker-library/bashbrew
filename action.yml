@@ -11,6 +11,7 @@ runs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: '${{ github.action_path }}/go.mod'
+        cache-dependency-path: '${{ github.action_path }}/go.sum'
     - run: |
         '${{ github.action_path }}/bashbrew.sh' --version > /dev/null
         '${{ github.action_path }}/bin/bashbrew' --version
