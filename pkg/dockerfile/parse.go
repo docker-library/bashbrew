@@ -3,6 +3,7 @@ package dockerfile
 import (
 	"bufio"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -25,6 +26,15 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 		// panic: assignment to entry in nil map
 		StageNameFroms: map[string]string{},
 		// (nil slices work fine)
+	}
+
+	// Store the arg and env instructions for later variable expansion
+	env := make(map[string]string)
+	resolve := func(k string) string {
+		if v, found := env[k]; found {
+			return v
+		}
+		return k
 	}
 
 	scanner := bufio.NewScanner(dockerfile)
@@ -77,11 +87,21 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 
 		instruction := strings.ToUpper(fields[0])
 
-		// TODO balk at ARG / $ in from values
-
 		switch instruction {
+		case "ARG", "ENV":
+			switch {
+			// Handle new style "ENV FOO=BAR" assignment style
+			case len(fields) == 2 && strings.Contains(fields[1], "="):
+				if k, v, found := strings.Cut(fields[1], "="); found {
+					env[k] = v
+				}
+			// Handle old style "ENV FOO BAR" assignment style
+			case len(fields) == 3 && !strings.Contains(fields[1], "="):
+				env[fields[1]] = fields[3]
+			}
 		case "FROM":
-			from := fields[1]
+			// Expand variables
+			from := os.Expand(fields[1], resolve)
 
 			if stageFrom, ok := meta.StageNameFroms[from]; ok {
 				// if this is a valid stage name, we should resolve it back to the original FROM value of that previous stage (we don't care about inter-stage dependencies for the purposes of either tag dependency calculation or tag building -- just how many there are and what external things they require)
@@ -101,7 +121,10 @@ func ParseReader(dockerfile io.Reader) (Metadata, error) {
 			}
 
 		case "COPY":
-			for _, arg := range fields[1:] {
+			for _, f := range fields[1:] {
+				// Expand variables
+				arg := os.Expand(f, resolve)
+
 				if !strings.HasPrefix(arg, "--") {
 					// doesn't appear to be a "flag"; time to bail!
 					break
